@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Board from './components/Board'
-import './globals.css'
+import { useState } from "react";
+import Board from "./components/Board";
 
-export default function Home() {
-  const [n, setN] = useState(4)
+export default function HomePage() {
+  const [n, setN] = useState<number | "">("");
+  const minN = 6;
 
   return (
     <div className="page">
       {/* Top bar */}
       <div className="top-bar">
-        <div /> {/* left spacer */}
+        <div></div>
 
         <h1 className="title">Queens Game</h1>
 
@@ -19,18 +19,31 @@ export default function Home() {
           <label>Enter N:</label>
           <input
             type="number"
-            value={n}
-            onChange={(e) => setN(Number(e.target.value))}
             className="n-input no-spinner"
+            placeholder="≥ 6"
+            value={n}
+            min={minN}
+            onChange={(e) => {
+              const value = e.target.value;
+              setN(value === "" ? "" : Number(value));
+            }}
           />
         </div>
       </div>
 
+      {/* Validation message */}
+      {n !== "" && n < minN && (
+        <p style={{ color: "red", textAlign: "center" }}>
+          N must be at least {minN}
+        </p>
+      )}
+
       {/* Board */}
-      <div className="board-container">
-        <Board n={n} />
-      </div>
+      {n !== "" && n >= minN && (
+        <div className="board-container">
+          <Board n={n} />
+        </div>
+      )}
     </div>
-  )
+  );
 }
-``

@@ -1,30 +1,27 @@
 type BoardProps = {
-  n: number
-}
+  n: number;
+};
 
 export default function Board({ n }: BoardProps) {
-  if (n <= 0) return null
-
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${n}, 50px)`,
-        gap: 0,
-        marginTop: 20
+        display: "grid",
+        gridTemplateColumns: `repeat(${n}, 60px)`,
+        gridTemplateRows: `repeat(${n}, 60px)`,
       }}
     >
-      {Array.from({ length: n * n }).map((_, index) => (
+      {Array.from({ length: n * n }).map((_, i) => (
         <div
-          key={index}
+          key={i}
           style={{
-            width: 50,
-            height: 50,
-            border: '1px solid black',
-            backgroundColor: 'white'
+            width: "60px",
+            height: "60px",
+            border: "2px solid black",
+            backgroundColor: "white",
           }}
         />
       ))}
     </div>
-  )
+  );
 }
