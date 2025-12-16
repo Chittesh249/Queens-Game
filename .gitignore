@@ -1,0 +1,39 @@
+# ========================
+# Node / Next.js
+# ========================
+node_modules/
+.next/
+npm-debug.log*
+yarn-error.log*
+
+# ========================
+# Spring Boot / Java
+# ========================
+target/
+*.class
+*.log
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# ========================
+# Environment files
+# ========================
+.env
+.env.local
+
+# ========================
+# IDE / Editor
+# ========================
+.vscode/
+.idea/
+
+# ========================
+# OS files
+# ========================
+.DS_Store
+Thumbs.db
+
+# Python virtual environments
+venv/
+backend/venv/
