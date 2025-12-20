@@ -64,8 +64,17 @@ body {
   height: 36px;
   padding: 6px 10px;
   font-size: 16px;
-  border: 2px solid black;
+  border: 2px solid #333;
   border-radius: 4px;
+  background: white;
+  color: black;
+}
+
+@media (prefers-color-scheme: dark) {
+  .n-input {
+    background: #f0f0f0;
+    border-color: #666;
+  }
 }
 
 /* Remove arrows */
