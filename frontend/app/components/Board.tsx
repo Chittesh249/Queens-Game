@@ -214,6 +214,7 @@ function assignRegionColors(nodes: GraphNode[], n: number): void {
 
 export default function Board({ n }: BoardProps) {
   const [boardSeed, setBoardSeed] = useState(0);
+  const [queens, setQueens] = useState<Set<number>>(new Set());
 
   // Compute colors using optimized graph algorithm with regions
   const { boxColors, hasBorder } = useMemo(() => {
@@ -240,24 +241,40 @@ export default function Board({ n }: BoardProps) {
     return { boxColors: colors, hasBorder: borders };
   }, [n, boardSeed]);
 
+  const handleCellClick = (index: number) => {
+    const newQueens = new Set(queens);
+    if (newQueens.has(index)) {
+      newQueens.delete(index);
+    } else {
+      newQueens.add(index);
+    }
+    setQueens(newQueens);
+  };
+
+  const handleNewBoard = () => {
+    setBoardSeed(prev => prev + 1);
+    setQueens(new Set()); // Clear queens on new board
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
       {/* Generate New Board Button */}
       <button
-        onClick={() => setBoardSeed(prev => prev + 1)}
+        onClick={handleNewBoard}
         style={{
-          padding: "10px 20px",
+          padding: "12px 24px",
           fontSize: "16px",
-          fontWeight: "bold",
-          backgroundColor: "#4ECDC4",
+          fontWeight: "600",
+          backgroundColor: "#5B8DEF",
           color: "#fff",
           border: "none",
-          borderRadius: "8px",
+          borderRadius: "6px",
           cursor: "pointer",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+          transition: "all 0.2s ease",
         }}
-        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#45B7D1")}
-        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#4ECDC4")}
+        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#4A7DD9")}
+        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#5B8DEF")}
       >
         🎲 Generate New Board
       </button>
@@ -266,43 +283,48 @@ export default function Board({ n }: BoardProps) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${n}, 60px)`,
-          gridTemplateRows: `repeat(${n}, 60px)`,
+          gridTemplateColumns: `repeat(${n}, 65px)`,
+          gridTemplateRows: `repeat(${n}, 65px)`,
           gap: "0",
-          padding: "8px",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          borderRadius: "12px",
-          boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+          border: "2px solid #000",
+          backgroundColor: "#fff",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
         {Array.from({ length: n * n }).map((_, i) => (
           <div
             key={i}
+            onClick={() => handleCellClick(i)}
             style={{
-              width: "60px",
-              height: "60px",
+              width: "65px",
+              height: "65px",
               backgroundColor: boxColors[i],
-              borderTop: hasBorder[i].top ? "4px solid #2d3436" : "1px solid rgba(0,0,0,0.1)",
-              borderRight: hasBorder[i].right ? "4px solid #2d3436" : "1px solid rgba(0,0,0,0.1)",
-              borderBottom: hasBorder[i].bottom ? "4px solid #2d3436" : "1px solid rgba(0,0,0,0.1)",
-              borderLeft: hasBorder[i].left ? "4px solid #2d3436" : "1px solid rgba(0,0,0,0.1)",
+              borderTop: hasBorder[i].top ? "2px solid #000" : "1px solid #000",
+              borderRight: hasBorder[i].right ? "2px solid #000" : "1px solid #000",
+              borderBottom: hasBorder[i].bottom ? "2px solid #000" : "1px solid #000",
+              borderLeft: hasBorder[i].left ? "2px solid #000" : "1px solid #000",
               boxSizing: "border-box",
-              transition: "all 0.2s ease",
               cursor: "pointer",
-              position: "relative",
-              boxShadow: "inset 0 2px 4px rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "36px",
+              transition: "background-color 0.15s ease",
+              userSelect: "none",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.05)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)";
-              e.currentTarget.style.zIndex = "10";
+              if (!queens.has(i)) {
+                e.currentTarget.style.opacity = "0.85";
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = "inset 0 2px 4px rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.1)";
-              e.currentTarget.style.zIndex = "1";
+              e.currentTarget.style.opacity = "1";
             }}
-          />
+          >
+            {queens.has(i) && (
+              <span style={{ filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.3))" }}>👑</span>
+            )}
+          </div>
         ))}
       </div>
     </div>
