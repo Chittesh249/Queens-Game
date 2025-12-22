@@ -250,27 +250,33 @@ function buildGraph(n: number, seed: number): GraphNode[] {
   return nodes;
 }
 
+// Generate N distinct colors dynamically using HSL
+function generateDistinctColors(n: number): string[] {
+  const colors: string[] = [];
+  const hueStep = 360 / n; // Divide color wheel evenly
+  
+  for (let i = 0; i < n; i++) {
+    const hue = Math.floor(i * hueStep);
+    const saturation = 65 + (i % 3) * 10; // Vary saturation: 65%, 75%, 85%
+    const lightness = 70 + (i % 2) * 10;  // Vary lightness: 70%, 80%
+    colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+  }
+  
+  return colors;
+}
+
 // Assign colors to regions (each region gets one distinct color)
 function assignRegionColors(nodes: GraphNode[], n: number): void {
-  const regionColors = [
-    "#FF6B9D", // Rose Pink
-    "#4ECDC4", // Turquoise
-    "#95E1D3", // Mint
-    "#FFD93D", // Bright Yellow
-    "#6BCF7F", // Emerald Green
-    "#A8E6CF", // Light Green
-    "#FFB6B9", // Peach Pink
-    "#8ED1FC", // Sky Blue
-    "#C7CEEA", // Lavender
-    "#FECA57", // Mango
-    "#FF9FF3", // Pink Purple
-    "#54A0FF", // Bright Blue
-  ];
+  const regionColors = generateDistinctColors(n);
   
   // Assign each node the color of its region
   for (const node of nodes) {
-    node.color = regionColors[node.region % regionColors.length];
+    node.color = regionColors[node.region];
   }
+
+  // Debug: verify distinct colors used
+  const usedColors = new Set(nodes.map(node => node.color));
+  console.log(`Regions (target N): ${n}, distinct region ids: ${new Set(nodes.map(n => n.region)).size}, distinct colors used: ${usedColors.size}`);
 }
 
 export default function Board({ n }: BoardProps) {
@@ -562,11 +568,21 @@ export default function Board({ n }: BoardProps) {
       bestMove = winner.move;
       console.log(`🏆 WINNING MOVE ${bestMove}!`);
     } else if (fairMoves.length > 0) {
-      // Pick move that maximizes AI options while being fair
-      const best = fairMoves.sort((a, b) => b.aiMoves - a.aiMoves)[0];
+      // Pick move based on difficulty
+      let best;
+      if (difficulty === "hard") {
+        // HARD: minimize human moves first, then maximize AI moves
+        best = fairMoves.sort((a, b) => {
+          if (a.humanMoves === b.humanMoves) return b.aiMoves - a.aiMoves;
+          return a.humanMoves - b.humanMoves;
+        })[0];
+      } else {
+        // EASY: maximize AI options while being fair
+        best = fairMoves.sort((a, b) => b.aiMoves - a.aiMoves)[0];
+      }
       bestMove = best.move;
       maxFutureOptions = best.aiMoves;
-      console.log(`🎯 FAIR GREEDY: ${bestMove} (AI=${best.aiMoves}, Human=${best.humanMoves})`);
+      console.log(`🎯 GREEDY PICK: ${bestMove} (AI=${best.aiMoves}, Human=${best.humanMoves}, mode=${difficulty})`);
     } else {
       // All moves block human - pick least aggressive
       const leastBad = moveEvaluations.sort((a, b) => b.aiMoves - a.aiMoves)[0];
@@ -598,67 +614,42 @@ export default function Board({ n }: BoardProps) {
       display: "flex", 
       flexDirection: "column", 
       alignItems: "center", 
-      gap: "15px",
-      backgroundImage: "linear-gradient(45deg, #000 0%, #1a1a2e 50%, #000 100%)",
-      padding: "20px",
+      gap: "20px",
+      background: "#f5f5f5",
+      padding: "30px",
       minHeight: "100vh",
-      maxWidth: "100vw",
-      overflow: "auto",
-      boxSizing: "border-box",
+      fontFamily: "Arial, sans-serif",
     }}>
-      {/* ULTRA BRAIN ROT HEADER */}
+      {/* Title */}
       <div style={{
-        fontSize: "clamp(24px, 5vw, 48px)",
-        fontWeight: "900",
-        textTransform: "uppercase",
-        backgroundImage: "linear-gradient(90deg, #ff0080, #ff8c00, #40e0d0, #ff0080)",
-        backgroundSize: "200% 100%",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        animation: "rainbow 3s linear infinite, shake 0.5s infinite",
-        textShadow: "0 0 30px rgba(255, 0, 128, 0.8)",
-        letterSpacing: "clamp(2px, 0.5vw, 4px)",
+        fontSize: "32px",
+        fontWeight: "bold",
+        color: "#333",
       }}>
-        💀 QUEENS GAME 💀
+        👑 Queens Game
       </div>
 
-      {/* Game Controls - MAXIMUM BRAIN ROT - RESPONSIVE */}
+      {/* Controls */}
       <div style={{ 
         display: "flex", 
-        gap: "10px", 
-        alignItems: "center",
+        gap: "15px", 
         flexWrap: "wrap",
         justifyContent: "center",
-        maxWidth: "95vw",
       }}>
         <button
           onClick={handleNewBoard}
           style={{
-            padding: "clamp(10px, 2vw, 18px) clamp(20px, 4vw, 36px)",
-            fontSize: "clamp(14px, 2.5vw, 20px)",
-            fontWeight: "900",
-            backgroundImage: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            padding: "10px 20px",
+            fontSize: "16px",
+            fontWeight: "600",
+            background: "#4CAF50",
             color: "#fff",
-            border: "4px solid #fff",
-            borderRadius: "20px",
+            border: "none",
+            borderRadius: "5px",
             cursor: "pointer",
-            boxShadow: "0 0 20px rgba(102, 126, 234, 0.8), 8px 8px 0px #000",
-            transition: "all 0.1s ease",
-            textTransform: "uppercase",
-            letterSpacing: "2px",
-            animation: "glow 2s infinite",
-            whiteSpace: "nowrap",
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = "translate(-3px, -3px) scale(1.05)";
-            e.currentTarget.style.boxShadow = "0 0 30px rgba(102, 126, 234, 1), 12px 12px 0px #000";
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = "translate(0, 0) scale(1)";
-            e.currentTarget.style.boxShadow = "0 0 20px rgba(102, 126, 234, 0.8), 8px 8px 0px #000";
           }}
         >
-          💥 NEW GAME FR FR 💥
+          New Game
         </button>
 
         <select
@@ -666,194 +657,134 @@ export default function Board({ n }: BoardProps) {
           onChange={(e) => handleModeChange(e.target.value as GameMode)}
           disabled={!gameState.gameOver && gameState.queenPositions.length > 0}
           style={{
-            padding: "clamp(10px, 2vw, 14px) clamp(12px, 2.5vw, 20px)",
-            fontSize: "clamp(12px, 2vw, 16px)",
-            fontWeight: "800",
-            border: "3px solid #000",
-            borderRadius: "12px",
+            padding: "10px",
+            fontSize: "14px",
+            border: "1px solid #ccc",
+            borderRadius: "5px",
+            background: "#fff",
             cursor: "pointer",
-            backgroundImage: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-            color: "#fff",
-            boxShadow: "4px 4px 0px #000",
-            textTransform: "uppercase",
           }}
         >
-          <option value="human-vs-human">💀 PVP MODE 💀</option>
-          <option value="human-vs-ai">🤖 FIGHT THE BOT 🤖</option>
+          <option value="human-vs-human">Player vs Player</option>
+          <option value="human-vs-ai">Player vs AI</option>
         </select>
 
         <button
           onClick={() => setShowValidMoves(!showValidMoves)}
           style={{
-            padding: "clamp(10px, 2vw, 14px) clamp(12px, 2.5vw, 20px)",
-            fontSize: "clamp(12px, 2vw, 15px)",
-            fontWeight: "800",
-            backgroundImage: showValidMoves 
-              ? "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)" 
-              : "linear-gradient(135deg, #a8a8a8 0%, #6b6b6b 100%)",
-            color: "#000",
-            border: "3px solid #000",
-            borderRadius: "12px",
+            padding: "10px 20px",
+            fontSize: "14px",
+            fontWeight: "600",
+            background: showValidMoves ? "#2196F3" : "#999",
+            color: "#fff",
+            border: "none",
+            borderRadius: "5px",
             cursor: "pointer",
-            boxShadow: "4px 4px 0px #000",
-            textTransform: "uppercase",
-            whiteSpace: "nowrap",
           }}
         >
-          {showValidMoves ? "👁️ HINTS ON" : "🚫 HINTS OFF"}
+          {showValidMoves ? "Hints: ON" : "Hints: OFF"}
         </button>
 
         <select
           value={difficulty}
           onChange={(e) => {
             setDifficulty(e.target.value as Difficulty);
-            initializeGame(); // Restart game with new difficulty
+            initializeGame();
           }}
           style={{
-            padding: "clamp(10px, 2vw, 14px) clamp(12px, 2.5vw, 20px)",
-            fontSize: "clamp(12px, 2vw, 16px)",
-            fontWeight: "800",
-            border: "3px solid #000",
-            borderRadius: "12px",
+            padding: "10px",
+            fontSize: "14px",
+            border: "1px solid #ccc",
+            borderRadius: "5px",
+            background: "#fff",
             cursor: "pointer",
-            backgroundImage: difficulty === "hard"
-              ? "linear-gradient(135deg, #ff0844 0%, #ffb199 100%)"
-              : "linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)",
-            color: "#fff",
-            boxShadow: "4px 4px 0px #000",
-            textTransform: "uppercase",
           }}
         >
-          <option value="easy">👶 EASY MODE</option>
-          <option value="hard">🔥 HARD MODE</option>
+          <option value="easy">Easy Mode</option>
+          <option value="hard">Hard Mode</option>
         </select>
       </div>
 
-      {/* Game Status - MAXIMUM BRAIN ROT - RESPONSIVE */}
+      {/* Queen Slots (N queens) */}
       <div style={{
-        padding: "clamp(12px, 3vw, 24px) clamp(20px, 5vw, 40px)",
-        backgroundImage: gameState.gameOver 
-          ? "linear-gradient(135deg, #fa709a 0%, #fee140 50%, #fa709a 100%)" 
-          : "linear-gradient(135deg, #30cfd0 0%, #330867 50%, #30cfd0 100%)",
-        backgroundSize: "200% 200%",
+        display: "flex",
+        gap: "6px",
+        marginTop: "5px",
+        justifyContent: "center",
+        alignItems: "center",
+      }}>
+        {Array.from({ length: n }).map((_, i) => {
+          const filled = gameState.queenPositions.length > i;
+          return (
+            <div
+              key={i}
+              style={{
+                width: "14px",
+                height: "14px",
+                borderRadius: "50%",
+                border: "2px solid #4CAF50",
+                backgroundColor: filled ? "#4CAF50" : "transparent",
+              }}
+            />
+          );
+        })}
+      </div>
+
+      <div style={{
+        padding: "20px 30px",
+        background: gameState.gameOver ? "#4CAF50" : "#2196F3",
         color: "#fff",
-        borderRadius: "25px",
-        fontWeight: "900",
-        fontSize: "clamp(14px, 3vw, 20px)",
+        borderRadius: "8px",
         textAlign: "center",
-        minWidth: "min(500px, 90vw)",
-        maxWidth: "95vw",
-        boxShadow: "0 0 40px rgba(255, 255, 255, 0.5), 10px 10px 0px #000",
-        border: "5px solid #fff",
-        textTransform: "uppercase",
-        letterSpacing: "clamp(1px, 0.3vw, 3px)",
-        animation: gameState.gameOver ? "winner 1s infinite" : "pulse 2s infinite, bgSlide 3s linear infinite",
-        position: "relative",
-        overflow: "hidden",
+        maxWidth: "600px",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       }}>
         {gameState.gameOver ? (
           <div>
-            <div style={{ fontSize: "clamp(24px, 5vw, 32px)", marginBottom: "12px", textShadow: "3px 3px 0px #000" }}>
-              💀 {gameState.winner} IS THE GOAT 💀
+            <div style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "10px" }}>
+              {gameState.winner} Wins!
             </div>
-            <div style={{ fontSize: "clamp(14px, 2.5vw, 16px)", fontWeight: "700" }}>
+            <div style={{ fontSize: "16px", marginBottom: "5px" }}>
               {gameState.queenPositions.length === n 
-                ? `🏆 PERFECT GAME - ALL ${n} REGIONS FILLED! 🏆`
-                : `PARTIAL GAME - ${gameState.queenPositions.length}/${n} QUEENS PLACED`
+                ? `Perfect Game - All ${n} regions filled!`
+                : `${gameState.queenPositions.length}/${n} queens placed`
               }
             </div>
-            <div style={{ fontSize: "clamp(12px, 2vw, 14px)", marginTop: "8px", opacity: 0.9 }}>
-              P1: {gameState.player1Queens} 👑 | P2: {gameState.player2Queens} 👑
+            <div style={{ fontSize: "14px" }}>
+              Player 1: {gameState.player1Queens} | Player 2: {gameState.player2Queens}
             </div>
           </div>
         ) : (
           <div>
-            <div style={{ fontSize: "clamp(16px, 3vw, 24px)", marginBottom: "8px", textShadow: "2px 2px 0px #000" }}>
+            <div style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "8px" }}>
               {gameMode === "human-vs-ai" && gameState.currentPlayer === 2 
-                ? "🤖 AI THINKING... 🧠" 
-                : `⚡ PLAYER ${gameState.currentPlayer} DROP THAT QUEEN ⚡`}
+                ? "AI is thinking..." 
+                : `Player ${gameState.currentPlayer}'s Turn`}
             </div>
-            <div style={{ fontSize: "clamp(12px, 2vw, 15px)", fontWeight: "700" }}>
-              {gameState.validMoves.length} MOVES LEFT 📍 {gameState.queenPositions.length}/{n} QUEENS PLACED
+            <div style={{ fontSize: "15px", marginBottom: "5px" }}>
+              {gameState.validMoves.length} valid moves | {gameState.queenPositions.length}/{n} queens placed
             </div>
-            <div style={{ fontSize: "clamp(11px, 1.8vw, 13px)", marginTop: "4px", fontWeight: "700" }}>
-              P1: {gameState.player1Queens} 👑 | P2: {gameState.player2Queens} 👑
+            <div style={{ fontSize: "14px" }}>
+              Player 1: {gameState.player1Queens} | Player 2: {gameState.player2Queens}
             </div>
-            <div style={{ fontSize: "clamp(10px, 1.5vw, 12px)", marginTop: "6px", opacity: 0.8 }}>
-              {difficulty === "hard" ? "🔥 HARD MODE - Full Diagonals" : "👶 EASY MODE - Adjacent Only"}
+            <div style={{ fontSize: "12px", marginTop: "5px", opacity: 0.9 }}>
+              {difficulty === "hard" ? "Hard Mode (Full Diagonals)" : "Easy Mode (Adjacent Only)"}
             </div>
           </div>
         )}
       </div>
 
-      {/* ULTRA BRAIN ROT ANIMATIONS */}
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-10px) rotate(5deg); }
-        }
-        @keyframes pulse-dot {
-          0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 10px rgba(102, 126, 234, 0.8); }
-          50% { transform: scale(1.5); opacity: 0.6; box-shadow: 0 0 30px rgba(102, 126, 234, 1); }
-        }
-        @keyframes rainbow {
-          0% { background-position: 0% 50%; }
-          100% { background-position: 200% 50%; }
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0) rotate(0deg); }
-          25% { transform: translateX(-2px) rotate(-1deg); }
-          75% { transform: translateX(2px) rotate(1deg); }
-        }
-        @keyframes glow {
-          0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)); }
-          50% { filter: brightness(1.2) drop-shadow(0 0 20px rgba(255, 255, 255, 0.8)); }
-        }
-        @keyframes winner {
-          0%, 100% { transform: scale(1) rotate(0deg); }
-          25% { transform: scale(1.05) rotate(-2deg); }
-          75% { transform: scale(1.05) rotate(2deg); }
-        }
-        @keyframes bgSlide {
-          0% { background-position: 0% 50%; }
-          100% { background-position: 200% 50%; }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .queen-bounce {
-          animation: bounce 0.6s ease-in-out, spin 10s linear infinite;
-          display: inline-block;
-        }
-        .hint-pulse {
-          animation: pulse-dot 1.5s infinite;
-        }
-      `}</style>
-
-      {/* Board Grid - ULTRA BRAIN ROT - RESPONSIVE */}
+      {/* Board Grid */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${n}, minmax(30px, 60px))`,
-          gridTemplateRows: `repeat(${n}, minmax(30px, 60px))`,
+          gridTemplateColumns: `repeat(${n}, minmax(40px, 60px))`,
+          gridTemplateRows: `repeat(${n}, minmax(40px, 60px))`,
           gap: "0",
-          border: "5px solid #fff",
-          backgroundColor: "#000",
-          boxShadow: "0 0 50px rgba(255, 255, 255, 0.5), 0 10px 30px rgba(0,0,0,0.5)",
-          borderRadius: "15px",
-          padding: "5px",
-          animation: "float 4s ease-in-out infinite",
-          maxWidth: "min(90vw, 90vh)",
-          maxHeight: "min(90vw, 90vh)",
+          border: "2px solid #333",
+          backgroundColor: "#fff",
+          borderRadius: "4px",
+          overflow: "hidden",
         }}
       >
         {Array.from({ length: n * n }).map((_, i) => {
@@ -868,95 +799,38 @@ export default function Board({ n }: BoardProps) {
               style={{
                 width: "100%",
                 height: "100%",
-                minWidth: "30px",
-                minHeight: "30px",
-                aspectRatio: "1 / 1",
                 backgroundColor: boxColors[i],
-                borderTop: hasBorder[i].top ? "3px solid #000" : "2px solid rgba(0,0,0,0.3)",
-                borderRight: hasBorder[i].right ? "3px solid #000" : "2px solid rgba(0,0,0,0.3)",
-                borderBottom: hasBorder[i].bottom ? "3px solid #000" : "2px solid rgba(0,0,0,0.3)",
-                borderLeft: hasBorder[i].left ? "3px solid #000" : "2px solid rgba(0,0,0,0.3)",
+                borderTop: hasBorder[i].top ? "2px solid #333" : "1px solid rgba(0,0,0,0.1)",
+                borderRight: hasBorder[i].right ? "2px solid #333" : "1px solid rgba(0,0,0,0.1)",
+                borderBottom: hasBorder[i].bottom ? "2px solid #333" : "1px solid rgba(0,0,0,0.1)",
+                borderLeft: hasBorder[i].left ? "2px solid #333" : "1px solid rgba(0,0,0,0.1)",
                 boxSizing: "border-box",
                 cursor: !gameState.gameOver && isPlayerTurn && isValidMove ? "pointer" : "default",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "clamp(20px, 4vmin, 42px)",
+                fontSize: "32px",
                 transition: "all 0.2s ease",
                 userSelect: "none",
                 position: "relative",
-                opacity: isValidMove ? 1 : hasQueen ? 1 : 0.7,
-                filter: isValidMove ? "brightness(1.2) saturate(1.3)" : "brightness(1)",
-                boxShadow: isValidMove ? "inset 0 0 20px rgba(102, 126, 234, 0.5)" : "none",
-              }}
-              onMouseEnter={(e) => {
-                if (!gameState.gameOver && isPlayerTurn && isValidMove) {
-                  e.currentTarget.style.transform = "scale(1.1)";
-                  e.currentTarget.style.zIndex = "10";
-                  e.currentTarget.style.filter = "brightness(1.4) saturate(1.5)";
-                  e.currentTarget.style.boxShadow = "0 0 30px rgba(102, 126, 234, 1), inset 0 0 20px rgba(255, 255, 255, 0.5)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.zIndex = "1";
-                e.currentTarget.style.filter = isValidMove ? "brightness(1.2) saturate(1.3)" : "brightness(1)";
-                e.currentTarget.style.boxShadow = isValidMove ? "inset 0 0 20px rgba(102, 126, 234, 0.5)" : "none";
               }}
             >
               {hasQueen && (
-                <span className="queen-bounce" style={{ 
-                  filter: "drop-shadow(0 3px 5px rgba(0,0,0,0.5))",
-                  fontSize: "clamp(20px, 4vmin, 42px)",
-                }}>👑</span>
+                <span style={{ fontSize: "32px" }}>👑</span>
               )}
               {isValidMove && !hasQueen && (
-                <div className="hint-pulse" style={{
-                  width: "clamp(10px, 2vmin, 16px)",
-                  height: "clamp(10px, 2vmin, 16px)",
+                <div style={{
+                  width: "10px",
+                  height: "10px",
                   borderRadius: "50%",
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  border: "3px solid #000",
-                  boxShadow: "0 0 10px rgba(102, 126, 234, 0.8)",
+                  background: "#2196F3",
+                  border: "2px solid #fff",
                 }} />
               )}
             </div>
           );
         })}
       </div>
-
-      {/* Algorithm Explanation - BRAIN ROT EDITION - RESPONSIVE */}
-      {gameMode === "human-vs-ai" && (
-        <div style={{
-          padding: "clamp(12px, 3vw, 20px)",
-          background: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
-          borderRadius: "12px",
-          maxWidth: "min(550px, 90vw)",
-          fontSize: "clamp(12px, 2vw, 15px)",
-          lineHeight: "1.7",
-          border: "4px solid #000",
-          boxShadow: "6px 6px 0px #000",
-          fontWeight: "600",
-        }}>
-          <div style={{ 
-            fontWeight: "900", 
-            marginBottom: "12px", 
-            color: "#000",
-            fontSize: "18px",
-            textTransform: "uppercase",
-            letterSpacing: "1px",
-          }}>
-            🧠 AI GREEDY STRAT (NO CAP) 🧠
-          </div>
-          <div style={{ color: "#222" }}>
-            Bot be like: "YO LEMME PICK THE MOVE WITH THE <strong>MOST FUTURE MOVES</strong> FR FR 💯"
-            <br/><br/>
-            This AI only thinks about RIGHT NOW ⚡ (locally optimal) - it ain't predicting your next 5 moves like some chess grandmaster 🤷
-            <br/><br/>
-            <strong>⏱️ Speed:</strong> O(N³) per turn (that's math for "pretty fast ngl")
-          </div>
-        </div>
-      )}
     </div>
   );
 }
