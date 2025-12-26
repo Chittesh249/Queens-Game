@@ -1,12 +1,12 @@
-2-Player Queens Game - DAA Project
+# 2-Player Queens Game - DAA Project
 
-🎯 Project Overview
+## 🎯 Project Overview
 
 A strategic 2-player board game based on the **N-Queens problem**, demonstrating **Greedy Algorithm** usage for a Design and Analysis of Algorithms (DAA) course.
 
 ---
 
-📋 Game Objective
+## 📋 Game Objective
 
 - **Board**: N × N chessboard with colored regions
 - **Players**: Two players (Player 1 and Player 2) alternate turns
@@ -16,9 +16,9 @@ A strategic 2-player board game based on the **N-Queens problem**, demonstrating
 
 ---
 
-⚙️ Algorithmic Requirements
+## ⚙️ Algorithmic Requirements
 
-1. **Greedy Algorithm (Core Implementation)**
+### 1. **Greedy Algorithm (Core Implementation)**
 
 At each turn, the algorithm:
 - ✅ Evaluates **all valid positions**
@@ -30,7 +30,7 @@ At each turn, the algorithm:
 - O(N²) to check all positions
 - O(N) to evaluate each position's future options
 
-2. **State Evaluation**
+### 2. **State Evaluation**
 
 For each candidate cell:
 ```
@@ -38,7 +38,7 @@ futureOptions = countSafePositions(afterPlacingQueen)
 chosenMove = argmax(futureOptions)
 ```
 
-3. **Graph Interpretation**
+### 3. **Graph Interpretation**
 
 The game is modeled as a **state graph**:
 - **Nodes** = Board states
@@ -47,21 +47,21 @@ The game is modeled as a **state graph**:
 
 ---
 
-🧠 Core Functions
+## 🧠 Core Functions
 
-Backend (Java/Spring Boot)
+### Backend (Java/Spring Boot)
 
-`isSafe(position, queenPositions)`
+#### `isSafe(position, queenPositions)`
 Checks if a position is safe:
 - No attack from existing queens (row, column, diagonals)
 - Region not already occupied
 
-`getAllValidMoves(gameState)`
+#### `getAllValidMoves(gameState)`
 Returns all legal queen placements considering:
 - Queen attack patterns
 - Region constraints
 
-`evaluateMove(gameState, position)`
+#### `evaluateMove(gameState, position)`
 **GREEDY HEURISTIC**:
 ```java
 int evaluateMove(GameState gameState, int position) {
@@ -78,7 +78,7 @@ int evaluateMove(GameState gameState, int position) {
 }
 ```
 
-`greedyMove(gameState)`
+#### `greedyMove(gameState)`
 **GREEDY ALGORITHM**:
 ```java
 int greedyMove(GameState gameState) {
@@ -100,20 +100,20 @@ int greedyMove(GameState gameState) {
 
 ---
 
-👥 Game Modes
+## 👥 Game Modes
 
-1. Human vs Human 🧑‍🤝‍🧑
+### 1. Human vs Human 🧑‍🤝‍🧑
 - Both players manually select positions
 - Tests strategic thinking
 
-2. Human vs AI 🧑‍💻🤖
+### 2. Human vs AI 🧑‍💻🤖
 - Player 1: Human
 - Player 2: Greedy AI
 - Demonstrates algorithm decision-making
 
 ---
 
-🎮 Game Flow
+## 🎮 Game Flow
 
 ```mermaid
 graph TD
@@ -134,20 +134,20 @@ graph TD
 
 ---
 
-🔍 Why Greedy Algorithm?
+## 🔍 Why Greedy Algorithm?
 
-✅ **Advantages**:
+### ✅ **Advantages**:
 1. **Fast Decision Making**: O(N³) vs O(N!) for exhaustive search
 2. **Locally Optimal**: Always picks "best" next move
 3. **Simple to Implement**: No complex recursion
 4. **Demonstrable**: Easy to visualize and explain
 
-❌ **Limitations**:
+### ❌ **Limitations**:
 1. **Not Globally Optimal**: May miss better long-term strategies
 2. **Myopic**: Doesn't consider opponent's future moves
 3. **Can Lose**: Greedy doesn't guarantee winning
 
-📊 **Educational Value**:
+### 📊 **Educational Value**:
 This is **NOT** the classic N-Queens puzzle (finding all solutions).  
 This is a **game strategy problem** where greedy is appropriate because:
 - Real-time decision making required
@@ -156,7 +156,7 @@ This is a **game strategy problem** where greedy is appropriate because:
 
 ---
 
-🛠️ Technical Stack
+## 🛠️ Technical Stack
 
 **Backend**:
 - Java 17
@@ -174,9 +174,9 @@ This is a **game strategy problem** where greedy is appropriate because:
 
 ---
 
-🚀 How to Run the Project
+## 🚀 How to Run the Project
 
-Prerequisites
+### Prerequisites
 
 **Required Software**:
 - ✅ Java JDK 17 or higher ([Download](https://www.oracle.com/java/technologies/downloads/))
@@ -331,7 +331,7 @@ GET http://localhost:8080/api/game/init
 
 ---
 
-🎮 Game Controls
+## 🎮 Game Controls
 
 | Action | How To |
 |--------|--------|
@@ -343,7 +343,7 @@ GET http://localhost:8080/api/game/init
 
 ---
 
-🚀 Running the Project
+## 🚀 Running the Project
 
 ### Backend
 ```bash
@@ -362,7 +362,7 @@ npm run dev
 
 ---
 
-📊 Output Format
+## 📊 Output Format
 
 ### During Game:
 ```
@@ -403,7 +403,7 @@ Opponent has no valid moves.
 
 ---
 
-📚 Academic Justification
+## 📚 Academic Justification
 
 ### Why This Design?
 
@@ -425,7 +425,7 @@ Opponent has no valid moves.
 
 ---
 
-🎓 Learning Outcomes
+## 🎓 Learning Outcomes
 
 Students will understand:
 - ✅ How greedy algorithms make decisions
@@ -436,7 +436,7 @@ Students will understand:
 
 ---
 
-👨‍💻 Authors
+## 👨‍💻 Authors
 
 Created for Design and Analysis of Algorithms Course  
 Demonstrates practical application of greedy algorithms in game design.
