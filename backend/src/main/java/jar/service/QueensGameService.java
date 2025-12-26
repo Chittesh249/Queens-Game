@@ -113,17 +113,35 @@ public class QueensGameService {
         }
         
         int bestPosition = -1;
-        int maxFutureOptions = -1;
+        int minOpponentMoves = Integer.MAX_VALUE;
+        int maxOwnMoves = -1;
         
-        // Evaluate each candidate position
         for (int position : validMoves) {
-            // evaluateMove: counts safe positions after this move
-            int futureOptions = evaluateMove(gameState, position);
+            // Simulate AI move
+            GameState afterAiMove = simulateMove(gameState, position);
             
-            // Greedy choice: select move with most future possibilities
-            if (futureOptions > maxFutureOptions) {
-                maxFutureOptions = futureOptions;
+            // Count opponent's valid moves (after we switch turns in simulation)
+            List<Integer> opponentMoves = getAllValidPositions(afterAiMove);
+            int numOpponentMoves = opponentMoves.size();
+            
+            // Check for instant win
+            if (numOpponentMoves == 0) {
+                return position; // Checkmate!
+            }
+            
+            // Primary Metric: MINIMIZE opponent moves (Aggressive)
+            if (numOpponentMoves < minOpponentMoves) {
+                minOpponentMoves = numOpponentMoves;
                 bestPosition = position;
+                // Reset secondary metric
+                maxOwnMoves = countSelfMoves(afterAiMove); 
+            } else if (numOpponentMoves == minOpponentMoves) {
+                // Tie-breaker: Maximize OWN moves (Flexibility)
+                int selfMoves = countSelfMoves(afterAiMove);
+                if (selfMoves > maxOwnMoves) {
+                    maxOwnMoves = selfMoves;
+                    bestPosition = position;
+                }
             }
         }
         
@@ -137,22 +155,40 @@ public class QueensGameService {
      * 3. Returns the count
      * Time Complexity: O(N²) - checks all cells
      */
-    private int evaluateMove(GameState gameState, int position) {
-        // Create temporary state with queen placed
-        List<Integer> tempQueens = new ArrayList<>(gameState.getQueenPositions());
-        tempQueens.add(position);
+    private GameState simulateMove(GameState original, int position) {
+        GameState clone = new GameState(original.getN(), original.getRegions());
+        clone.setQueenPositions(new ArrayList<>(original.getQueenPositions()));
+        clone.getQueenPositions().add(position);
         
-        int n = gameState.getN();
-        int safeCount = 0;
+        // Toggle player (simulating turn switch)
+        clone.setCurrentPlayer(original.getCurrentPlayer() == 1 ? 2 : 1);
         
-        // Count remaining safe positions
-        for (int i = 0; i < n * n; i++) {
-            if (!tempQueens.contains(i) && isSafePosition(i, tempQueens, n)) {
-                safeCount++;
-            }
+        // Update counts (just for completeness, not used in logic much)
+        if (original.getCurrentPlayer() == 1) {
+            clone.setPlayer1Queens(original.getPlayer1Queens() + 1);
+            clone.setPlayer2Queens(original.getPlayer2Queens());
+        } else {
+             clone.setPlayer1Queens(original.getPlayer1Queens());
+             clone.setPlayer2Queens(original.getPlayer2Queens() + 1);
         }
+        return clone;
+    }
+
+    /**
+     * Helper to count how many moves the AI would have if it were its turn again.
+     * Used as a tie-breaker.
+     */
+    private int countSelfMoves(GameState state) {
+        // 'state' has the opponent as current player. 
+        // We want to check valid moves for the AI (who just moved).
+        int playerWhoJustMoved = state.getCurrentPlayer() == 1 ? 2 : 1;
         
-        return safeCount;
+        // Create a temp state where it's the AI's turn again
+        GameState temp = new GameState(state.getN(), state.getRegions());
+        temp.setQueenPositions(new ArrayList<>(state.getQueenPositions()));
+        temp.setCurrentPlayer(playerWhoJustMoved);
+        
+        return getAllValidPositions(temp).size();
     }
 
     // Get all valid moves for current state
