@@ -6,21 +6,17 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-/**
- * 2-Player Queens Game Service implementing Greedy Algorithm
- * 
+/*
+ * 2-Player Queens Game Service implementing Greedy Algorithm 
  * ALGORITHMIC REQUIREMENTS:
- * - Greedy Strategy: At each turn, select the position that maximizes future safe positions
- * - No backtracking or exhaustive search
- * - Locally optimal decision making
- * - Time Complexity: O(N³) per move evaluation
+ * - Greedy Strategy: At each turn, select the position that maximizes future safe positions. No backtracking or exhaustive search. 
+ * Locally optimal decision making
+ * Time Complexity: O(N³) per move evaluation
  */
 @Service
 public class QueensGameService {
 
-    /**
-     * Initialize a new game
-     */
+    // Start a new game 
     public GameState initializeGame(int n, List<Integer> regions) {
         GameState gameState = new GameState(n, regions);
         gameState.setMessage("Game initialized. Player 1's turn.");
@@ -32,9 +28,7 @@ public class QueensGameService {
         return gameState;
     }
 
-    /**
-     * Make a move (human player)
-     */
+    //Make a move (for human player)
     public GameState makeMove(Move move) {
         GameState gameState = move.getGameState();
         int position = move.getPosition();
@@ -75,18 +69,13 @@ public class QueensGameService {
         return gameState;
     }
 
-    /**
-     * GREEDY ALGORITHM: Get AI's best move
-     * 
+    /* GREEDY ALGORITHM:
      * Strategy: Select the move that maximizes remaining safe positions
-     * This is a GREEDY approach because it:
+     * This is a greedy approach because it:
      * 1. Makes locally optimal choice at each step
      * 2. Does NOT consider future opponent moves
      * 3. Does NOT use backtracking
-     * 
-     * Time Complexity: O(N³)
-     * - O(N²) to check all positions
-     * - O(N) to evaluate each position
+     * Time Complexity: O(N³) - O(N²) to check all positions; O(N) to evaluate each position
      */
     public GameState getGreedyAIMove(GameState gameState) {
         if (gameState.isGameOver()) {
@@ -109,15 +98,12 @@ public class QueensGameService {
         return makeMove(aiMove);
     }
 
-    /**
-     * CORE GREEDY FUNCTION: Select best move
-     * 
+    /* GREEDY FUNCTION: Select best move
      * For each valid position:
      * 1. Simulate placing queen there
      * 2. Count remaining safe positions
-     * 3. Choose position with MAXIMUM remaining options
-     * 
-     * This demonstrates GREEDY choice: maximize immediate future possibilities
+     * 3. Choose position with maximum remaining options
+     * Maximize immediate future possibilities
      */
     private int greedyMove(GameState gameState) {
         List<Integer> validMoves = getAllValidPositions(gameState);
@@ -144,14 +130,11 @@ public class QueensGameService {
         return bestPosition;
     }
 
-    /**
-     * EVALUATE MOVE: Count remaining safe positions after placing queen
-     * 
-     * This is the GREEDY HEURISTIC:
-     * - Simulates the move
-     * - Counts how many cells remain safe
-     * - Returns the count (higher is better)
-     * 
+    /* EVALUATE MOVE: Count remaining safe positions after placing queen
+     * This is the greedy heuristic:
+     * 1. Simulates the move
+     * 2. Counts how many cells remain safe
+     * 3. Returns the count
      * Time Complexity: O(N²) - checks all cells
      */
     private int evaluateMove(GameState gameState, int position) {
@@ -172,9 +155,7 @@ public class QueensGameService {
         return safeCount;
     }
 
-    /**
-     * Get all valid moves for current state
-     */
+    // Get all valid moves for current state
     public GameState getAllValidMoves(GameState gameState) {
         List<Integer> validMoves = getAllValidPositions(gameState);
         gameState.setValidMoves(validMoves);
@@ -182,9 +163,7 @@ public class QueensGameService {
         return gameState;
     }
 
-    /**
-     * Get all valid positions (not attacked and region not occupied)
-     */
+    // Get all valid positions (not attacked and region not occupied)
     private List<Integer> getAllValidPositions(GameState gameState) {
         List<Integer> validPositions = new ArrayList<>();
         int n = gameState.getN();
@@ -198,9 +177,7 @@ public class QueensGameService {
         return validPositions;
     }
 
-    /**
-     * IS SAFE: Check if position is safe for placing a queen
-     * 
+    /* Check if position is safe for placing a queen
      * Conditions:
      * 1. Not attacked by existing queens (row, column, diagonals)
      * 2. Region not already occupied by another queen
@@ -210,8 +187,7 @@ public class QueensGameService {
                !isRegionOccupied(position, gameState);
     }
 
-    /**
-     * Check if position is attacked by any existing queen
+     /* Check if position is attacked by any existing queen
      * Checks: same row, same column, both diagonals
      */
     private boolean isSafePosition(int position, List<Integer> queenPositions, int n) {
@@ -234,20 +210,18 @@ public class QueensGameService {
         
         return true;
     }
-
-    /**
-     * Check if region already has a queen
-     */
+    
+     // Check if region already has a queen
     private boolean isRegionOccupied(int position, GameState gameState) {
         if (gameState.getRegions() == null || gameState.getRegions().isEmpty()) {
-            return false; // No region constraints
+            return false;                             // No region constraints
         }
         
         int region = gameState.getRegions().get(position);
         
         for (int queenPos : gameState.getQueenPositions()) {
             if (gameState.getRegions().get(queenPos) == region) {
-                return true; // Region already has a queen
+                return true;                         // Region already has a queen
             }
         }
         
