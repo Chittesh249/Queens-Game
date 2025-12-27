@@ -41,7 +41,10 @@ public class QueensSolverService {
         List<Integer> regionsToProcess = new ArrayList<>(regionCells.keySet());
         
         // Sort regions by number of available cells (fewer options first)
-        regionsToProcess.sort(Comparator.comparingInt(r -> regionCells.get(r).size()));
+        // Custom Merge Sort instead of built-in sort
+        if (!regionsToProcess.isEmpty()) {
+            mergeSort(regionsToProcess, regionCells, 0, regionsToProcess.size() - 1);
+        }
 
         for (int region : regionsToProcess) {
             List<Integer> candidates = regionCells.get(region);
@@ -157,6 +160,57 @@ public class QueensSolverService {
             if (r4 >= 0 && c4 < n) {
                 attacked[r4 * n + c4] = true;
             }
+        }
+    }
+
+    /**
+     * Custom Merge Sort implementation to sort regions by their size (number of available positions).
+     */
+    private void mergeSort(List<Integer> list, Map<Integer, List<Integer>> regionCells, int left, int right) {
+        if (left < right) {
+            int mid = left + (right - left) / 2;
+            mergeSort(list, regionCells, left, mid);
+            mergeSort(list, regionCells, mid + 1, right);
+            merge(list, regionCells, left, mid, right);
+        }
+    }
+
+    private void merge(List<Integer> list, Map<Integer, List<Integer>> regionCells, int left, int mid, int right) {
+        // Create temp copies
+        List<Integer> leftList = new ArrayList<>(list.subList(left, mid + 1));
+        List<Integer> rightList = new ArrayList<>(list.subList(mid + 1, right + 1));
+
+        int i = 0, j = 0;
+        int k = left;
+
+        while (i < leftList.size() && j < rightList.size()) {
+            int region1 = leftList.get(i);
+            int region2 = rightList.get(j);
+            
+            // Compare based on region size (number of available cells)
+            int size1 = regionCells.get(region1).size();
+            int size2 = regionCells.get(region2).size();
+
+            if (size1 <= size2) {
+                list.set(k, region1);
+                i++;
+            } else {
+                list.set(k, region2);
+                j++;
+            }
+            k++;
+        }
+
+        while (i < leftList.size()) {
+            list.set(k, leftList.get(i));
+            i++;
+            k++;
+        }
+
+        while (j < rightList.size()) {
+            list.set(k, rightList.get(j));
+            j++;
+            k++;
         }
     }
 }
