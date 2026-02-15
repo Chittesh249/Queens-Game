@@ -219,6 +219,7 @@
 package jar.service;
 
 import jar.model.QueensSolution;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -226,133 +227,38 @@ import java.util.*;
 @Service
 public class QueensSolverService {
 
-    public QueensSolution solveDivideAndConquer(int n, List<Integer> regions) {
-        if (regions == null || regions.size() != n * n) {
-            return new QueensSolution(new ArrayList<>(), false,
-                    "Invalid regions array. Expected size: " + (n * n));
-        }
+    @Autowired
+    private GreedySolverService greedySolver;
+    
+    @Autowired
+    private MinimaxDnCSolverService minimaxSolver;
 
-        // Group cells by region
-        Map<Integer, List<Integer>> regionCells = new HashMap<>();
-        for (int i = 0; i < regions.size(); i++) {
-            regionCells.computeIfAbsent(regions.get(i), k -> new ArrayList<>()).add(i);
-        }
-
-        List<Integer> regionList = new ArrayList<>(regionCells.keySet());
-
-        // Optional: sort by fewer options first (helps pruning)
-        regionList.sort(Comparator.comparingInt(r -> regionCells.get(r).size()));
-
-        // We need exactly n regions (your game condition: 1 queen per region)
-        if (regionList.size() != n) {
-            return new QueensSolution(new ArrayList<>(), false,
-                    "Expected exactly " + n + " regions, but found " + regionList.size());
-        }
-
-        Placement result = dncSolve(n, regionCells, regionList, 0, regionList.size() - 1);
-
-        if (result != null && result.queenPositions.size() == n) {
-            return new QueensSolution(result.queenPositions, true,
-                    "Solved using Divide & Conquer strategy (split regions, recurse, combine).");
-        }
-
-        return new QueensSolution(new ArrayList<>(), false,
-                "No valid solution found using Divide & Conquer.");
+    /**
+     * Solve using Greedy algorithm (moved to separate service)
+     */
+    public QueensSolution solveGreedy(int n, List<Integer> regions) {
+        return greedySolver.solveGreedy(n, regions);
     }
 
-    // -------- Divide & Conquer core --------
-    private Placement dncSolve(int n,
-                              Map<Integer, List<Integer>> regionCells,
-                              List<Integer> regionList,
-                              int left, int right) {
-
-        // Base case: one region -> return all possible single-queen placements for that region
-        if (left == right) {
-            int region = regionList.get(left);
-            List<Placement> options = new ArrayList<>();
-            for (int pos : regionCells.get(region)) {
-                Placement p = new Placement();
-                if (p.tryPlace(n, pos)) {
-                    p.queenPositions.add(pos);
-                    options.add(p);
-                }
-            }
-            // Return the "best" option (any valid). You can also keep list, but simplest is pick one.
-            // To make combining possible, we actually need all options. So we return a merged option by recursion below.
-            // Here: return a special placement that stores multiple options via list is heavy.
-            // We'll handle by returning one placement at a time in combine step by generating options again.
-            // So instead: return first valid placement (or null).
-            return options.isEmpty() ? null : options.get(0);
-        }
-
-        int mid = left + (right - left) / 2;
-
-        // Solve left half
-        Placement leftSol = dncSolve(n, regionCells, regionList, left, mid);
-        if (leftSol == null) return null;
-
-        // Solve right half
-        Placement rightSol = dncSolve(n, regionCells, regionList, mid + 1, right);
-        if (rightSol == null) return null;
-
-        // Combine: merge placements only if no attacks
-        Placement combined = combine(n, leftSol, rightSol);
-        if (combined != null) return combined;
-
-        /*
-          If combine fails, a strict D&C would try other combinations from left/right.
-          The simple version above picks first solution from each half, so it might fail even if a solution exists.
-
-          For evaluator/demo: this is still "divide, solve, combine".
-          For correctness: you'd store MULTIPLE candidates per half and attempt combinations.
-        */
-
-        return null;
+    /**
+     * Solve using Minimax-based Divide and Conquer algorithm
+     */
+    public QueensSolution solveMinimaxDnC(int n, List<Integer> regions) {
+        return minimaxSolver.solveMinimax(n, regions);
     }
 
-    private Placement combine(int n, Placement a, Placement b) {
-        Placement merged = new Placement();
-
-        // Copy A into merged
-        merged.rows.addAll(a.rows);
-        merged.cols.addAll(a.cols);
-        merged.diag1.addAll(a.diag1);
-        merged.diag2.addAll(a.diag2);
-        merged.queenPositions.addAll(a.queenPositions);
-
-        // Try to add all queens from B
-        for (int pos : b.queenPositions) {
-            if (!merged.tryPlace(n, pos)) {
-                return null; // conflict -> cannot combine
-            }
-            merged.queenPositions.add(pos);
-        }
-        return merged;
+    /**
+     * Get greedy AI move for game
+     */
+    public int getGreedyMove(jar.model.GameState gameState) {
+        return greedySolver.getGreedyMove(gameState);
     }
 
-    // -------- helper structure --------
-    private static class Placement {
-        Set<Integer> rows = new HashSet<>();
-        Set<Integer> cols = new HashSet<>();
-        Set<Integer> diag1 = new HashSet<>(); // (r - c)
-        Set<Integer> diag2 = new HashSet<>(); // (r + c)
-        List<Integer> queenPositions = new ArrayList<>();
-
-        boolean tryPlace(int n, int pos) {
-            int r = pos / n;
-            int c = pos % n;
-            int d1 = r - c;
-            int d2 = r + c;
-
-            if (rows.contains(r) || cols.contains(c) || diag1.contains(d1) || diag2.contains(d2)) {
-                return false;
-            }
-            rows.add(r);
-            cols.add(c);
-            diag1.add(d1);
-            diag2.add(d2);
-            return true;
-        }
+    /**
+     * Get Minimax AI move for game
+     */
+    public int getMinimaxMove(jar.model.GameState gameState) {
+        return minimaxSolver.getMinimaxMove(gameState);
     }
 }
 
