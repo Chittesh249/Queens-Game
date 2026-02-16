@@ -45,175 +45,87 @@ class GraphNode {
   }
 }
 
-// Greedy algorithm for generating EXACTLY N regions
-// Greedy algorithm for generating EXACTLY N regions (or at least N-1)
+// Simple BFS/Flood Fill to generate regions
 function generateRandomRegions(n: number, seed: number): number[] {
-  const tryGenerate = (attemptSeed: number): number[] | null => {
-    const regions = new Array(n * n).fill(-1);
-    const targetRegions = n;
-    const totalCells = n * n;
-    const minCellsPerRegion = Math.floor(totalCells / targetRegions);
-    const extraCells = totalCells % targetRegions;
+  const totalCells = n * n;
+  const regions = new Array(totalCells).fill(-1);
 
-    // Use seed for deterministic randomness
-    const seededRandom = (i: number) => {
-      const x = Math.sin(attemptSeed * 9999 + i * 1234) * 10000;
-      return x - Math.floor(x);
-    };
-
-    // Track region sizes
-    const regionSizes = new Array(targetRegions).fill(0);
-    const regionMaxSizes = new Array(targetRegions).fill(minCellsPerRegion);
-
-    // Distribute extra cells to first few regions
-    for (let i = 0; i < extraCells; i++) {
-      regionMaxSizes[i]++;
-    }
-
-    // Generate well-distributed seed positions (one per region)
-    const seeds: number[] = [];
-    const usedPositions = new Set<number>();
-
-    // Grid based seeding for better distribution
-    const gridSize = Math.ceil(Math.sqrt(targetRegions));
-
-    for (let i = 0; i < targetRegions; i++) {
-      let seedPos;
-      let attempts = 0;
-      do {
-        // Spread seeds across the board using grid cells
-        const gridRow = Math.floor(i / gridSize);
-        const gridCol = i % gridSize;
-
-        const rowStart = Math.floor((gridRow / gridSize) * n);
-        const rowEnd = Math.floor(((gridRow + 1) / gridSize) * n);
-        const colStart = Math.floor((gridCol / gridSize) * n);
-        const colEnd = Math.floor(((gridCol + 1) / gridSize) * n);
-
-        const row = Math.floor(rowStart + seededRandom(i * 100 + attempts) * (rowEnd - rowStart));
-        const col = Math.floor(colStart + seededRandom(i * 101 + attempts) * (colEnd - colStart));
-
-        seedPos = Math.min(n * n - 1, Math.max(0, row * n + col));
-        attempts++;
-      } while (usedPositions.has(seedPos) && attempts < 50);
-
-      if (usedPositions.has(seedPos)) {
-        let freePos = -1;
-        for (let k = 0; k < n * n; k++) {
-          if (!usedPositions.has(k)) {
-            freePos = k;
-            break;
-          }
-        }
-        if (freePos !== -1) seedPos = freePos;
-      }
-
-      usedPositions.add(seedPos);
-      seeds.push(seedPos);
-      regions[seedPos] = i;
-      regionSizes[i] = 1;
-    }
-
-    // Helper to get unassigned neighbors
-    const getUnassignedNeighbors = (idx: number): number[] => {
-      const row = Math.floor(idx / n);
-      const col = idx % n;
-      const neighbors: number[] = [];
-
-      if (row > 0 && regions[(row - 1) * n + col] === -1) neighbors.push((row - 1) * n + col);
-      if (row < n - 1 && regions[(row + 1) * n + col] === -1) neighbors.push((row + 1) * n + col);
-      if (col > 0 && regions[row * n + (col - 1)] === -1) neighbors.push(row * n + (col - 1));
-      if (col < n - 1 && regions[row * n + (col + 1)] === -1) neighbors.push(row * n + (col + 1));
-
-      return neighbors;
-    };
-
-    // Greedy BFS: grow regions while respecting size limits
-    let queue = seeds.map((pos, idx) => ({ pos, regionId: idx }));
-    let iterations = 0;
-    const maxIterations = n * n * 5;
-
-    while (queue.length > 0 && iterations < maxIterations) {
-      iterations++;
-      const queueIdx = Math.floor(seededRandom(iterations) * queue.length);
-      const { pos: current, regionId } = queue.splice(queueIdx, 1)[0];
-
-      const currentRegion = regions[current];
-      if (currentRegion === -1 || currentRegion !== regionId) continue;
-
-      if (regionSizes[regionId] >= regionMaxSizes[regionId]) continue;
-
-      const neighbors = getUnassignedNeighbors(current);
-
-      if (neighbors.length > 0) {
-        const randIdx = Math.floor(seededRandom(iterations * 777) * neighbors.length);
-        const nextCell = neighbors[randIdx];
-        regions[nextCell] = regionId;
-        regionSizes[regionId]++;
-
-        queue.push({ pos: nextCell, regionId });
-        if (neighbors.length > 1) {
-          queue.push({ pos: current, regionId });
-        }
-      }
-    }
-
-    // Fill remaining cells
-    for (let i = 0; i < regions.length; i++) {
-      if (regions[i] === -1) {
-        const row = Math.floor(i / n);
-        const col = i % n;
-
-        const neighborRegions: number[] = [];
-        if (row > 0 && regions[(row - 1) * n + col] !== -1)
-          neighborRegions.push(regions[(row - 1) * n + col]);
-        if (col > 0 && regions[row * n + (col - 1)] !== -1)
-          neighborRegions.push(regions[row * n + (col - 1)]);
-        if (row < n - 1 && regions[(row + 1) * n + col] !== -1)
-          neighborRegions.push(regions[(row + 1) * n + col]);
-        if (col < n - 1 && regions[row * n + (col + 1)] !== -1)
-          neighborRegions.push(regions[row * n + (col + 1)]);
-
-        if (neighborRegions.length > 0) {
-          const chosenRegion = neighborRegions[0];
-          regions[i] = chosenRegion;
-          regionSizes[chosenRegion]++;
-        } else {
-          regions[i] = 0;
-        }
-      }
-    }
-
-    const distinctcount = new Set(regions).size;
-    // STRICTLY require N regions
-    if (distinctcount === n) {
-      return regions;
-    }
-    return null;
+  // Deterministic random number generator
+  const seededRandom = (i: number) => {
+    const x = Math.sin(seed * 9999 + i * 1234) * 10000;
+    return x - Math.floor(x);
   };
 
-  // Try up to 10 times to generate a good board
-  let result = tryGenerate(seed);
-  if (result) return result;
+  // 1. Pick N random seeds
+  const seeds: number[] = [];
+  const used = new Set<number>();
+  let attempt = 0;
 
-  for (let i = 1; i <= 10; i++) {
-    result = tryGenerate(seed + i * 997);
-    if (result) {
-      console.log(`Generated regions on retry ${i}`);
-      return result;
+  while (seeds.length < n) {
+    const pos = Math.floor(seededRandom(attempt) * totalCells);
+    if (!used.has(pos)) {
+      used.add(pos);
+      seeds.push(pos);
+      regions[pos] = seeds.length - 1; // Assign region ID
+    }
+    attempt++;
+    // Fallback if random gen is stuck (unlikely with this math)
+    if (attempt > 10000) {
+      for (let i = 0; i < totalCells && seeds.length < n; i++) {
+        if (!used.has(i)) {
+          used.add(i);
+          seeds.push(i);
+          regions[i] = seeds.length - 1;
+        }
+      }
     }
   }
 
-  // Last resort: simple stripe/grid assignment to guarantee N regions
-  console.warn("Falling back to simple region generation");
-  const regions = new Array(n * n).fill(0);
-  for (let i = 0; i < n * n; i++) {
-    regions[i] = i % n;
+  // 2. Expand regions using BFS
+  // Queue holds indices to process
+  let queue = [...seeds];
+
+  // To make it slightly more organic/random than pure BFS, we can shuffle neighbors or pick randomly
+  // But standard BFS is "simple" and safe.
+
+  let head = 0;
+  while (head < queue.length) {
+    const currentIdx = queue[head++];
+    const currentRegion = regions[currentIdx];
+
+    // Get neighbors
+    const row = Math.floor(currentIdx / n);
+    const col = currentIdx % n;
+
+    const neighbors: number[] = [];
+    if (row > 0) neighbors.push((row - 1) * n + col);
+    if (row < n - 1) neighbors.push((row + 1) * n + col);
+    if (col > 0) neighbors.push(row * n + (col - 1));
+    if (col < n - 1) neighbors.push(row * n + (col + 1));
+
+    // Randomize neighbors for slightly less square shapes
+    // using seeded random based on current index
+    neighbors.sort((a, b) => seededRandom(a + seed) - 0.5);
+
+    for (const neighbor of neighbors) {
+      if (regions[neighbor] === -1) {
+        regions[neighbor] = currentRegion;
+        queue.push(neighbor);
+      }
+    }
   }
+
+  // 3. Fill any remaining holes (should strictly not happen with connected grid BFS, but for safety)
+  for (let i = 0; i < totalCells; i++) {
+    if (regions[i] === -1) {
+      regions[i] = 0; // Default to region 0
+    }
+  }
+
   return regions;
 }
 
-// Build graph with conflict edges (optimized for large N)
+// Build graph with simple region generation
 function buildGraph(n: number, seed: number): GraphNode[] {
   const nodes: GraphNode[] = [];
   const regions = generateRandomRegions(n, seed);
@@ -224,9 +136,6 @@ function buildGraph(n: number, seed: number): GraphNode[] {
     const col = i % n;
     nodes.push(new GraphNode(row, col, i, regions[i]));
   }
-
-  // Edges are handled by backend logic now, but we keep this for color generation consistency if needed
-  // ... (graph building logic omitted as we rely on backend for game logic)
 
   return nodes;
 }
@@ -397,7 +306,7 @@ export default function Board({ n }: BoardProps) {
       flexDirection: "column",
       alignItems: "center",
       gap: "20px",
-      background: "#f5f5f5",
+      background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
       padding: "30px",
       minHeight: "100vh",
       fontFamily: "Arial, sans-serif",
@@ -429,6 +338,7 @@ export default function Board({ n }: BoardProps) {
             border: "none",
             borderRadius: "5px",
             cursor: "pointer",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
           }}
         >
           New Game
@@ -439,16 +349,21 @@ export default function Board({ n }: BoardProps) {
           onChange={(e) => handleModeChange(e.target.value as GameMode)}
           disabled={gameState?.gameOver || (gameState?.queenPositions?.length || 0) > 0}
           style={{
-            padding: "10px",
+            padding: "10px 16px",
             fontSize: "14px",
-            border: "1px solid #ccc",
-            borderRadius: "5px",
+            fontWeight: "500",
+            border: "1px solid #ddd",
+            borderRadius: "6px",
             background: "#fff",
+            color: "#333",
             cursor: "pointer",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+            outline: "none",
+            minWidth: "160px",
           }}
         >
-          <option value="human-vs-human">Player vs Player</option>
-          <option value="human-vs-ai">Player vs AI</option>
+          <option value="human-vs-human">👤 Player vs Player</option>
+          <option value="human-vs-ai">🤖 Player vs AI</option>
         </select>
 
         <button
@@ -462,6 +377,7 @@ export default function Board({ n }: BoardProps) {
             border: "none",
             borderRadius: "5px",
             cursor: "pointer",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
           }}
         >
           {showValidMoves ? "Hints: ON" : "Hints: OFF"}
@@ -493,14 +409,17 @@ export default function Board({ n }: BoardProps) {
         })}
       </div>
 
+      {/* Game Status Panel */}
       <div style={{
         padding: "20px 30px",
-        background: gameState?.gameOver ? "#4CAF50" : "#2196F3",
+        background: gameState?.gameOver ? "linear-gradient(135deg, #4CAF50 0%, #45a049 100%)" : "linear-gradient(135deg, #2196F3 0%, #1976D2 100%)",
         color: "#fff",
-        borderRadius: "8px",
+        borderRadius: "12px",
         textAlign: "center",
         maxWidth: "600px",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        width: "90%",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+        transition: "background 0.3s ease",
       }}>
         {gameState?.gameOver ? (
           <div>
@@ -551,18 +470,15 @@ export default function Board({ n }: BoardProps) {
           backgroundColor: "#fff",
           borderRadius: "4px",
           overflow: "hidden",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
         }}
       >
         {Array.from({ length: n * n }).map((_, i) => {
           const hasQueen = gameState?.queenPositions?.includes(i);
           const isValidMove = showValidMoves && gameState?.validMoves?.includes(i);
-
-          // Determine background color based on region
-          // We can use the boxColors computed locally for visualization
           const bgColor = boxColors[i];
           const border = hasBorder[i];
 
-          // Dynamic borders
           const borderStyle = {
             borderTop: border.top ? "2px solid rgba(0,0,0,0.15)" : "1px solid rgba(0,0,0,0.05)",
             borderRight: border.right ? "2px solid rgba(0,0,0,0.15)" : "1px solid rgba(0,0,0,0.05)",
@@ -587,7 +503,6 @@ export default function Board({ n }: BoardProps) {
                 ...borderStyle,
               }}
             >
-              {/* Valid Move Indicator */}
               {isValidMove && !hasQueen && !gameState?.gameOver && (
                 <div
                   style={{
@@ -598,12 +513,11 @@ export default function Board({ n }: BoardProps) {
                   }}
                 />
               )}
-
-              {/* Queen Icon */}
               {hasQueen && (
                 <span style={{
                   filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.3))",
-                  fontSize: "32px"
+                  fontSize: "32px",
+                  zIndex: 2,
                 }}>
                   👑
                 </span>
@@ -612,6 +526,7 @@ export default function Board({ n }: BoardProps) {
           );
         })}
       </div>
+
       <div style={{ marginTop: "20px", fontSize: "12px", color: "#666" }}>
         Seed: {boardSeed} | API: {isLoading ? "Connecting..." : "Connected"}
       </div>

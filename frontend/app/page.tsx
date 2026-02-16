@@ -68,23 +68,44 @@ export default function HomePage() {
       <div
         style={{
           minHeight: "100vh",
-          background: "#f5f5f5",
-          fontFamily: "Arial, sans-serif",
+          background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+          fontFamily: "'Inter', sans-serif",
         }}
       >
-        <div style={{ padding: "10px 20px" }}>
+        <div style={{
+          padding: "20px",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: 10
+        }}>
           <button
             onClick={handleReset}
             style={{
-              padding: "6px 12px",
+              padding: "8px 16px",
               fontSize: 14,
-              borderRadius: 4,
-              border: "1px solid #ccc",
+              fontWeight: "600",
+              borderRadius: "6px",
+              border: "none",
               background: "#fff",
+              color: "#333",
               cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "transform 0.1s ease, box-shadow 0.1s ease",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
             }}
           >
-            ← Back
+            <span>←</span> Back
           </button>
         </div>
         <Board n={n} />
@@ -101,8 +122,8 @@ export default function HomePage() {
         alignItems: "center",
         justifyContent: "center",
         minHeight: "100vh",
-        background: "#f5f5f5",
-        fontFamily: "Arial, sans-serif",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        fontFamily: "'Inter', sans-serif",
         padding: "20px",
       }}
     >
@@ -115,11 +136,12 @@ export default function HomePage() {
 
       <div
         style={{
-          background: "#fff",
-          padding: "24px 32px",
-          borderRadius: 8,
-          boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-          minWidth: 280,
+          background: "#ffffff",
+          padding: "30px 40px",
+          borderRadius: 12,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          minWidth: 320,
+          border: "1px solid #eaeaea",
         }}
       >
         <label
@@ -145,13 +167,19 @@ export default function HomePage() {
           }}
           style={{
             width: "100%",
-            padding: "10px 12px",
+            padding: "12px 14px",
             fontSize: 16,
-            borderRadius: 4,
-            border: "1px solid #ccc",
+            borderRadius: 6,
+            border: "2px solid #e0e0e0",
             marginBottom: 10,
             boxSizing: "border-box",
+            backgroundColor: "#f9f9f9",
+            color: "#333",
+            outline: "none",
+            transition: "border-color 0.2s",
           }}
+          onFocus={(e) => e.target.style.borderColor = "#2196F3"}
+          onBlur={(e) => e.target.style.borderColor = "#e0e0e0"}
         />
 
         {n !== "" && n < minN && (
