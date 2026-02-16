@@ -73,14 +73,15 @@ public class QueensGameService {
         return gameState;
     }
 
-    /* GREEDY ALGORITHM:
+    /*
+     * GREEDY ALGORITHM - COMMENTED OUT
      * Strategy: Select the move that maximizes remaining safe positions
      * This is a greedy approach because it:
      * 1. Makes locally optimal choice at each step
      * 2. Does NOT consider future opponent moves
      * 3. Does NOT use backtracking
      * Time Complexity: O(N³) - O(N²) to check all positions; O(N) to evaluate each position
-     */
+     *
     public GameState getGreedyAIMove(GameState gameState) {
         if (gameState.isGameOver()) {
             return gameState;
@@ -101,6 +102,7 @@ public class QueensGameService {
         Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
         return makeMove(aiMove);
     }
+    */
 
     /* MINIMAX DnC ALGORITHM:
      * Strategy: Uses Minimax with alpha-beta pruning to find optimal move
@@ -132,13 +134,15 @@ public class QueensGameService {
         return makeMove(aiMove);
     }
 
-    /* GREEDY FUNCTION: Select best move
+    /*
+     * GREEDY FUNCTION - COMMENTED OUT
+     * Select best move
      * For each valid position:
      * 1. Simulate placing queen there
      * 2. Count remaining safe positions
      * 3. Choose position with maximum remaining options
      * Maximize immediate future possibilities
-     */
+     *
     private int greedyMove(GameState gameState) {
         List<Integer> validMoves = getAllValidPositions(gameState);
         
@@ -181,14 +185,17 @@ public class QueensGameService {
         
         return bestPosition;
     }
+    */
 
-    /* EVALUATE MOVE: Count remaining safe positions after placing queen
+    /*
+     * EVALUATE MOVE - COMMENTED OUT
+     * Count remaining safe positions after placing queen
      * This is the greedy heuristic:
      * 1. Simulates the move
      * 2. Counts how many cells remain safe
      * 3. Returns the count
      * Time Complexity: O(N²) - checks all cells
-     */
+     *
     private GameState simulateMove(GameState original, int position) {
         GameState clone = new GameState(original.getN(), original.getRegions());
         clone.setQueenPositions(new ArrayList<>(original.getQueenPositions()));
@@ -207,11 +214,13 @@ public class QueensGameService {
         }
         return clone;
     }
+    */
 
-    /**
-     * Helper to count how many moves the AI would have if it were its turn again.
-     * Used as a tie-breaker.
-     */
+    /*
+     * HELPER FUNCTION - COMMENTED OUT
+     * Count how many moves the AI would have if it were its turn again.
+     * Used as a tie-breaker for greedy algorithm.
+     *
     private int countSelfMoves(GameState state) {
         // 'state' has the opponent as current player. 
         // We want to check valid moves for the AI (who just moved).
@@ -224,6 +233,7 @@ public class QueensGameService {
         
         return getAllValidPositions(temp).size();
     }
+    */
 
     // Get all valid moves for current state
     public GameState getAllValidMoves(GameState gameState) {
