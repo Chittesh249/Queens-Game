@@ -227,18 +227,23 @@ import java.util.*;
 @Service
 public class QueensSolverService {
 
-    @Autowired
-    private GreedySolverService greedySolver;
-    
+//    /*
+//     * GREEDY ALGORITHM (DISABLED):
+//     * The greedy solver has been intentionally commented/disabled so the backend
+//     * only implements Divide & Conquer (Minimax DnC) logic.
+//     */
+//    @Autowired
+//    private GreedySolverService greedySolver;
+//
     @Autowired
     private MinimaxDnCSolverService minimaxSolver;
 
-    /**
-     * Solve using Greedy algorithm (moved to separate service)
-     */
-    public QueensSolution solveGreedy(int n, List<Integer> regions) {
-        return greedySolver.solveGreedy(n, regions);
-    }
+//    /**
+//     * Solve using Greedy algorithm (DISABLED - keep commented for reference).
+//     */
+//    public QueensSolution solveGreedy(int n, List<Integer> regions) {
+//        return greedySolver.solveGreedy(n, regions);
+//    }
 
     /**
      * Solve using Minimax-based Divide and Conquer algorithm
@@ -247,12 +252,12 @@ public class QueensSolverService {
         return minimaxSolver.solveMinimax(n, regions);
     }
 
-    /**
-     * Get greedy AI move for game
-     */
-    public int getGreedyMove(jar.model.GameState gameState) {
-        return greedySolver.getGreedyMove(gameState);
-    }
+//    /**
+//     * Get greedy AI move for game (DISABLED - keep commented for reference).
+//     */
+//    public int getGreedyMove(jar.model.GameState gameState) {
+//        return greedySolver.getGreedyMove(gameState);
+//    }
 
     /**
      * Get Minimax AI move for game
