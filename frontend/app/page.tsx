@@ -14,7 +14,6 @@ export default function HomePage() {
   const handleStart = () => {
     if (n !== "" && n >= minN && n <= maxN) {
       setIsLoading(true);
-      // Short, simple loading to keep UI responsive but calm
       setTimeout(() => {
         setIsLoading(false);
         setShowGame(true);
@@ -27,7 +26,7 @@ export default function HomePage() {
     setN("");
   };
 
-  // Simple loading screen
+
   if (isLoading) {
     return (
       <div
@@ -115,7 +114,7 @@ export default function HomePage() {
     );
   }
 
-  // Simple welcome / setup screen
+
   return (
     <div
       style={{
@@ -133,88 +132,105 @@ export default function HomePage() {
         Queens Game
       </div>
       <div style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>
-        2-player strategy game with greedy AI
+        2-player strategy game with AI
       </div>
 
       <div
         style={{
-          background: "#ffffff",
-          padding: "30px 40px",
-          borderRadius: 12,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-          minWidth: 320,
-          border: "1px solid #eaeaea",
+          display: "flex",
+          gap: "24px",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          marginTop: "20px",
+          marginBottom: "20px",
+          maxWidth: "900px",
+          width: "100%",
         }}
       >
-        <label
-          style={{
-            display: "block",
-            fontSize: 14,
-            marginBottom: 8,
-            color: "#333",
-          }}
-        >
-          Board size N ({minN}-{maxN})
-        </label>
-        <input
-          type="number"
-          value={n}
-          min={minN}
-          max={maxN}
-          onChange={(e) => {
-            const value = e.target.value;
-            setN(value === "" ? "" : Number(value));
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleStart();
-          }}
-          style={{
-            width: "100%",
-            padding: "12px 14px",
-            fontSize: 16,
-            borderRadius: 6,
-            border: "2px solid #e0e0e0",
-            marginBottom: 10,
-            boxSizing: "border-box",
-            backgroundColor: "#f9f9f9",
-            color: "#333",
-            outline: "none",
-            transition: "border-color 0.2s",
-          }}
-          onFocus={(e) => e.target.style.borderColor = "#2196F3"}
-          onBlur={(e) => e.target.style.borderColor = "#e0e0e0"}
-        />
-
-        {n !== "" && (n < minN || n > maxN) && (
-          <div
+        {/* Re-doing the map with better predefined colors */}
+        {[
+          { size: 6, bg: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", ring: "#667eea" }, // Deep Purple
+          { size: 7, bg: "linear-gradient(135deg, #1fa2ff 0%, #12d8fa 100%, #a6ffcb 100%)", ring: "#1fa2ff" }, // Electric Blue
+          { size: 8, bg: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)", ring: "#11998e" }, // Vivid Green
+          { size: 9, bg: "linear-gradient(135deg, #ff0844 0%, #ffb199 100%)", ring: "#ff0844" }, // Red/Orange
+          { size: 10, bg: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)", ring: "transparent" }, // Wait, user disliked light... let's change 10 too.
+        ].map(({ size, bg, ring }) => null)}
+        {/* Let's actually use the new values in the real map below */}
+        {[
+          { size: 6, bg: "linear-gradient(135deg, #43CBFF 0%, #9708CC 100%)", ring: "#9708CC" }, // Purple/Blue
+          { size: 7, bg: "linear-gradient(135deg, #F97794 0%, #623AA2 100%)", ring: "#623AA2" }, // Magenta/Deep Purple
+          { size: 8, bg: "linear-gradient(135deg, #FBD786 0%, #f7797d 100%)", ring: "#f7797d" }, // Gold/Red
+          { size: 9, bg: "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)", ring: "#0072ff" }, // Bright Blue
+          { size: 10, bg: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)", ring: "#11998e" }, // Bright Green
+        ].map(({ size, bg, ring }) => (
+          <button
+            key={size}
+            onClick={() => {
+              setN(size);
+              if (size >= minN && size <= maxN) {
+                setN(size);
+                setIsLoading(true);
+                setTimeout(() => {
+                  setIsLoading(false);
+                  setShowGame(true);
+                }, 600);
+              }
+            }}
             style={{
-              color: "#c62828",
-              fontSize: 13,
-              marginBottom: 8,
+              width: "140px",
+              height: "160px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "20px",
+              border: "none",
+              background: bg,
+              cursor: "pointer",
+              transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+              boxShadow: "0 10px 20px -10px rgba(0,0,0,0.15)",
+              position: "relative",
+              overflow: "hidden",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = "translateY(-10px) scale(1.05)";
+              e.currentTarget.style.boxShadow = `0 20px 30px -10px ${ring}80`; // Add transparency to ring color
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = "translateY(0) scale(1)";
+              e.currentTarget.style.boxShadow = "0 10px 20px -10px rgba(0,0,0,0.15)";
             }}
           >
-            N must be between {minN} and {maxN}.
-          </div>
-        )}
-
-        <button
-          onClick={handleStart}
-          disabled={n === "" || n < minN}
-          style={{
-            width: "100%",
-            padding: "10px 16px",
-            fontSize: 16,
-            fontWeight: 600,
-            borderRadius: 4,
-            border: "none",
-            background: n !== "" && n >= minN ? "#1976D2" : "#9e9e9e",
-            color: "#fff",
-            cursor: n !== "" && n >= minN ? "pointer" : "not-allowed",
-            marginTop: 4,
-          }}
-        >
-          Start Game
-        </button>
+            <div style={{
+              background: "rgba(255, 255, 255, 0.3)",
+              backdropFilter: "blur(4px)",
+              padding: "4px 12px",
+              borderRadius: "20px",
+              marginBottom: "12px",
+            }}>
+              <span style={{
+                fontSize: "13px",
+                color: "#fff",
+                textTransform: "uppercase",
+                letterSpacing: "1.5px",
+                fontWeight: "700",
+                textShadow: "0 1px 2px rgba(0,0,0,0.1)"
+              }}>
+                Board
+              </span>
+            </div>
+            <span style={{
+              fontSize: "64px",
+              fontWeight: "900",
+              color: "#fff",
+              lineHeight: 1,
+              textShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
+            }}>
+              {size}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
