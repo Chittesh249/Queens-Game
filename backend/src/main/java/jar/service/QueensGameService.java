@@ -2,19 +2,23 @@ package jar.service;
 
 import jar.model.GameState;
 import jar.model.Move;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 /*
- * 2-Player Queens Game Service implementing Greedy Algorithm 
+ * 2-Player Queens Game Service implementing Minimax DnC Algorithm 
  * ALGORITHMIC REQUIREMENTS:
- * - Greedy Strategy: At each turn, select the position that maximizes future safe positions. No backtracking or exhaustive search. 
- * Locally optimal decision making
- * Time Complexity: O(N³) per move evaluation
+ * - Minimax DnC Strategy: Uses recursive Minimax with alpha-beta pruning to find optimal moves
+ * - Divide and Conquer approach for decision making
+ * Time Complexity: O(b^d) where b is branching factor and d is depth
  */
 @Service
 public class QueensGameService {
+
+    @Autowired
+    private MinimaxDnCSolverService minimaxSolver;
 
     // Start a new game 
     public GameState initializeGame(int n, List<Integer> regions) {
@@ -94,6 +98,36 @@ public class QueensGameService {
         }
         
         // Make the greedy move
+        Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
+        return makeMove(aiMove);
+    }
+
+    /* MINIMAX DnC ALGORITHM:
+     * Strategy: Uses Minimax with alpha-beta pruning to find optimal move
+     * This approach:
+     * 1. Looks ahead multiple moves (depth-limited search)
+     * 2. Considers opponent's best responses
+     * 3. Uses alpha-beta pruning for efficiency
+     * Time Complexity: O(b^d) where b is branching factor, d is depth
+     */
+    public GameState getMinimaxAIMove(GameState gameState) {
+        if (gameState.isGameOver()) {
+            return gameState;
+        }
+        
+        // Use Minimax DnC solver to get the best move
+        int bestPosition = minimaxSolver.getMinimaxMove(gameState);
+        
+        if (bestPosition == -1) {
+            // No valid moves - AI loses
+            gameState.setGameOver(true);
+            String winner = gameState.getCurrentPlayer() == 1 ? "Player 2" : "Player 1";
+            gameState.setWinner(winner);
+            gameState.setMessage(winner + " wins! AI has no valid moves.");
+            return gameState;
+        }
+        
+        // Make the minimax move
         Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
         return makeMove(aiMove);
     }
