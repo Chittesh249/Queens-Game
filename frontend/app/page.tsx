@@ -9,8 +9,10 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const minN = 6;
 
+  const maxN = 10;
+
   const handleStart = () => {
-    if (n !== "" && n >= minN) {
+    if (n !== "" && n >= minN && n <= maxN) {
       setIsLoading(true);
       // Short, simple loading to keep UI responsive but calm
       setTimeout(() => {
@@ -63,7 +65,7 @@ export default function HomePage() {
   }
 
   // Game screen
-  if (showGame && n !== "" && n >= minN) {
+  if (showGame && n !== "" && n >= minN && n <= maxN) {
     return (
       <div
         style={{
@@ -152,12 +154,13 @@ export default function HomePage() {
             color: "#333",
           }}
         >
-          Board size N (≥ {minN})
+          Board size N ({minN}-{maxN})
         </label>
         <input
           type="number"
           value={n}
           min={minN}
+          max={maxN}
           onChange={(e) => {
             const value = e.target.value;
             setN(value === "" ? "" : Number(value));
@@ -182,7 +185,7 @@ export default function HomePage() {
           onBlur={(e) => e.target.style.borderColor = "#e0e0e0"}
         />
 
-        {n !== "" && n < minN && (
+        {n !== "" && (n < minN || n > maxN) && (
           <div
             style={{
               color: "#c62828",
@@ -190,7 +193,7 @@ export default function HomePage() {
               marginBottom: 8,
             }}
           >
-            N must be at least {minN}.
+            N must be between {minN} and {maxN}.
           </div>
         )}
 
