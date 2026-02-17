@@ -31,11 +31,11 @@ public class QueensGameController {
     }
 
     /**
-     * Get greedy AI's best move
+     * Get Minimax DnC AI's best move
      */
     @PostMapping("/ai-move")
     public GameState getAIMove(@RequestBody GameState gameState) {
-        return gameService.getGreedyAIMove(gameState);
+        return gameService.getMinimaxAIMove(gameState);
     }
 
     /**
