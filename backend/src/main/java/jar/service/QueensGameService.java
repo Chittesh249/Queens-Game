@@ -8,11 +8,12 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 /*
- * 2-Player Queens Game Service implementing Minimax DnC Algorithm 
+/*
+ * 2-Player Queens Game Service using Minimax DnC Solver
  * ALGORITHMIC REQUIREMENTS:
  * - Minimax DnC Strategy: Uses recursive Minimax with alpha-beta pruning to find optimal moves
- * - Divide and Conquer approach for decision making
- * Time Complexity: O(b^d) where b is branching factor and d is depth
+ * - Memoization: Caches board states to avoid redundant computations (DP on game tree)
+ * Time Complexity: O(b^d) where b is branching factor and d is depth, optimized by caching
  */
 @Service
 public class QueensGameService {

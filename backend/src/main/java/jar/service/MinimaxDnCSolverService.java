@@ -17,6 +17,10 @@ public class MinimaxDnCSolverService {
      * Minimax-based Divide and Conquer solver for the Queens game.
      * Uses recursive Minimax with alpha-beta pruning to find optimal moves.
      */
+    /**
+     * Minimax-based Divide and Conquer solver for the Queens game.
+     * Uses recursive Minimax with alpha-beta pruning to find optimal moves.
+     */
     public QueensSolution solveMinimax(int n, List<Integer> regions) {
         if (regions == null || regions.size() != n * n) {
             return new QueensSolution(new ArrayList<>(), false,
@@ -26,8 +30,9 @@ public class MinimaxDnCSolverService {
         // Create initial game state
         GameState gameState = new GameState(n, regions);
         
-        // Find optimal solution using Minimax
-        MinimaxResult result = minimaxSolve(gameState, 0, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        // Find optimal solution using Minimax with Memoization
+        Map<String, MinimaxResult> memo = new HashMap<>();
+        MinimaxResult result = minimaxSolve(gameState, 0, true, Integer.MIN_VALUE, Integer.MAX_VALUE, memo);
         
         if (result != null && result.moveSequence != null) {
             return new QueensSolution(result.moveSequence, true,
@@ -46,7 +51,8 @@ public class MinimaxDnCSolverService {
             return -1;
         }
         
-        MinimaxResult result = minimax(gameState, 0, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        Map<String, MinimaxResult> memo = new HashMap<>();
+        MinimaxResult result = minimax(gameState, 0, true, Integer.MIN_VALUE, Integer.MAX_VALUE, memo);
         return result != null ? result.bestMove : -1;
     }
 
@@ -55,20 +61,30 @@ public class MinimaxDnCSolverService {
     /**
      * Main Minimax solver - divides the problem into subproblems and conquers recursively
      */
-    private MinimaxResult minimaxSolve(GameState gameState, int depth, boolean isMaximizing, int alpha, int beta) {
+    private MinimaxResult minimaxSolve(GameState gameState, int depth, boolean isMaximizing, int alpha, int beta, Map<String, MinimaxResult> memo) {
+        // Generate key for memoization
+        String key = generateKey(gameState, depth, isMaximizing);
+        if (memo.containsKey(key)) {
+            return memo.get(key);
+        }
+
         // Base case: no valid moves
         List<Integer> validMoves = getAllValidPositions(gameState);
         if (validMoves.isEmpty()) {
             // Current player loses
             int score = isMaximizing ? LOSE_SCORE + depth : WIN_SCORE - depth;
-            return new MinimaxResult(score, new ArrayList<>(), -1);
+            MinimaxResult result = new MinimaxResult(score, new ArrayList<>(), -1);
+            memo.put(key, result);
+            return result;
         }
 
         // Base case: maximum depth reached
         if (depth >= MAX_DEPTH) {
             // Heuristic evaluation
             int score = evaluateGameState(gameState, isMaximizing);
-            return new MinimaxResult(score, new ArrayList<>(), -1);
+            MinimaxResult result = new MinimaxResult(score, new ArrayList<>(), -1);
+            memo.put(key, result);
+            return result;
         }
 
         // Divide: Generate all valid moves from current state
@@ -76,13 +92,15 @@ public class MinimaxDnCSolverService {
             // Simple case: only one move available
             int move = validMoves.get(0);
             GameState newState = makeMove(gameState, move);
-            MinimaxResult childResult = minimaxSolve(newState, depth + 1, !isMaximizing, alpha, beta);
+            MinimaxResult childResult = minimaxSolve(newState, depth + 1, !isMaximizing, alpha, beta, memo);
             
             if (childResult != null) {
                 List<Integer> sequence = new ArrayList<>();
                 sequence.add(move);
                 sequence.addAll(childResult.moveSequence);
-                return new MinimaxResult(childResult.score, sequence, move);
+                MinimaxResult result = new MinimaxResult(childResult.score, sequence, move);
+                memo.put(key, result);
+                return result;
             }
             return null;
         }
@@ -105,7 +123,7 @@ public class MinimaxDnCSolverService {
             GameState newState = makeMove(gameState, move);
             
             // Recursive call - conquer subproblem
-            MinimaxResult childResult = minimaxSolve(newState, depth + 1, !isMaximizing, alpha, beta);
+            MinimaxResult childResult = minimaxSolve(newState, depth + 1, !isMaximizing, alpha, beta, memo);
             
             if (childResult != null) {
                 int score = childResult.score;
@@ -139,28 +157,40 @@ public class MinimaxDnCSolverService {
             List<Integer> sequence = new ArrayList<>();
             sequence.add(bestMove);
             sequence.addAll(bestResult.moveSequence);
-            return new MinimaxResult(bestScore, sequence, bestMove);
+            MinimaxResult result = new MinimaxResult(bestScore, sequence, bestMove);
+            memo.put(key, result);
+            return result;
         }
         
-        return null;
+        return null; // Should ideally not be reached if valid moves exist
     }
 
     /**
      * Standard Minimax for single move selection
      */
-    private MinimaxResult minimax(GameState gameState, int depth, boolean isMaximizing, int alpha, int beta) {
+    private MinimaxResult minimax(GameState gameState, int depth, boolean isMaximizing, int alpha, int beta, Map<String, MinimaxResult> memo) {
+        // Generate key for memoization
+        String key = generateKey(gameState, depth, isMaximizing);
+        if (memo.containsKey(key)) {
+            return memo.get(key);
+        }
+
         // Base case: no valid moves
         List<Integer> validMoves = getAllValidPositions(gameState);
         if (validMoves.isEmpty()) {
             // Current player loses
             int score = isMaximizing ? LOSE_SCORE + depth : WIN_SCORE - depth;
-            return new MinimaxResult(score, new ArrayList<>(), -1);
+            MinimaxResult result = new MinimaxResult(score, new ArrayList<>(), -1);
+            memo.put(key, result);
+            return result;
         }
 
         // Base case: maximum depth
         if (depth >= MAX_DEPTH) {
             int score = evaluateGameState(gameState, isMaximizing);
-            return new MinimaxResult(score, new ArrayList<>(), -1);
+            MinimaxResult result = new MinimaxResult(score, new ArrayList<>(), -1);
+            memo.put(key, result);
+            return result;
         }
 
         int bestMove = -1;
@@ -168,7 +198,7 @@ public class MinimaxDnCSolverService {
 
         for (int move : validMoves) {
             GameState newState = makeMove(gameState, move);
-            MinimaxResult result = minimax(newState, depth + 1, !isMaximizing, alpha, beta);
+            MinimaxResult result = minimax(newState, depth + 1, !isMaximizing, alpha, beta, memo);
             
             if (result != null) {
                 int score = result.score;
@@ -193,7 +223,16 @@ public class MinimaxDnCSolverService {
             }
         }
 
-        return new MinimaxResult(bestScore, new ArrayList<>(), bestMove);
+        MinimaxResult result = new MinimaxResult(bestScore, new ArrayList<>(), bestMove);
+        memo.put(key, result);
+        return result;
+    }
+
+    // Generate unique key for game state
+    private String generateKey(GameState gameState, int depth, boolean isMaximizing) {
+        List<Integer> sortedQueens = new ArrayList<>(gameState.getQueenPositions());
+        Collections.sort(sortedQueens);
+        return sortedQueens.toString() + "|" + gameState.getCurrentPlayer() + "|" + depth + "|" + isMaximizing;
     }
 
     // -------- Helper Methods --------
