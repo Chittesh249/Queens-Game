@@ -2,6 +2,7 @@ package jar.service;
 
 import jar.model.GameState;
 import jar.model.Move;
+import jar.service.QueensSolverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +17,10 @@ import java.util.*;
  */
 @Service
 public class QueensGameService {
-
+    
+    @Autowired
+    private QueensSolverService solverService;
+    
     @Autowired
     private MinimaxDnCSolverService minimaxSolver;
 
@@ -306,5 +310,53 @@ public class QueensGameService {
         }
         
         return false;
+    }
+    
+    /**
+     * Get DP-optimized AI move
+     */
+    public GameState getDPOptimizedAIMove(GameState gameState) {
+        if (gameState.isGameOver()) {
+            return gameState;
+        }
+        
+        int bestPosition = solverService.getDPOptimizedMove(gameState);
+        
+        if (bestPosition == -1) {
+            // No valid moves - AI loses
+            gameState.setGameOver(true);
+            String winner = gameState.getCurrentPlayer() == 1 ? "Player 2" : "Player 1";
+            gameState.setWinner(winner);
+            gameState.setMessage(winner + " wins! AI has no valid moves.");
+            return gameState;
+        }
+        
+        // Make the DP-optimized move
+        Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
+        return makeMove(aiMove);
+    }
+    
+    /**
+     * Get Greedy AI move
+     */
+    public GameState getGreedyAIMove(GameState gameState) {
+        if (gameState.isGameOver()) {
+            return gameState;
+        }
+        
+        int bestPosition = solverService.getGreedyMove(gameState);
+        
+        if (bestPosition == -1) {
+            // No valid moves - AI loses
+            gameState.setGameOver(true);
+            String winner = gameState.getCurrentPlayer() == 1 ? "Player 2" : "Player 1";
+            gameState.setWinner(winner);
+            gameState.setMessage(winner + " wins! AI has no valid moves.");
+            return gameState;
+        }
+        
+        // Make the greedy move
+        Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
+        return makeMove(aiMove);
     }
 }

@@ -232,6 +232,9 @@ public class QueensSolverService {
     
     @Autowired
     private MinimaxDnCSolverService minimaxSolver;
+    
+    @Autowired
+    private DPOptimizedSolverService dpSolver;
 
     /**
      * Solve using Greedy algorithm (moved to separate service)
@@ -259,6 +262,41 @@ public class QueensSolverService {
      */
     public int getMinimaxMove(jar.model.GameState gameState) {
         return minimaxSolver.getMinimaxMove(gameState);
+    }
+    
+    /**
+     * Solve using DP-optimized algorithm
+     */
+    public QueensSolution solveDPOptimized(int n, List<Integer> regions) {
+        return dpSolver.solveDPOptimized(n, regions);
+    }
+    
+    /**
+     * Get DP-optimized AI move for game
+     */
+    public int getDPOptimizedMove(jar.model.GameState gameState) {
+        return dpSolver.getDPOptimizedMove(gameState);
+    }
+    
+    /**
+     * Get region-optimized move using DP techniques
+     */
+    public int getRegionOptimizedMove(jar.model.GameState gameState) {
+        return dpSolver.getRegionOptimizedMove(gameState);
+    }
+    
+    /**
+     * Get cache statistics for DP optimization
+     */
+    public Map<String, Object> getDPStatistics() {
+        return dpSolver.getCacheStatistics();
+    }
+    
+    /**
+     * Clear DP caches
+     */
+    public void clearDPCache() {
+        dpSolver.clearCache();
     }
 }
 
