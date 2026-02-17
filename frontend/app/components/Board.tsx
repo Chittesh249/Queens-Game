@@ -4,6 +4,7 @@ import * as api from "../utils/api";
 
 type BoardProps = {
   n: number;
+  algorithm?: "greedy" | "minimax" | "dp";
 };
 
 type GameMode = "human-vs-human" | "human-vs-ai";
@@ -165,7 +166,7 @@ function assignRegionColors(nodes: GraphNode[], n: number): void {
   }
 }
 
-export default function Board({ n }: BoardProps) {
+export default function Board({ n, algorithm = "greedy" }: BoardProps) {
   const [boardSeed, setBoardSeed] = useState(0);
   const [gameMode, setGameMode] = useState<GameMode>("human-vs-human");
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -263,7 +264,7 @@ export default function Board({ n }: BoardProps) {
     // Small delay for UX
     setTimeout(async () => {
       try {
-        const aiState = await api.getAIMove(currentGameState);
+        const aiState = await api.getAIMove(currentGameState, algorithm);
         setGameState(aiState);
       } catch (err) {
         console.error("Error getting AI move:", err);

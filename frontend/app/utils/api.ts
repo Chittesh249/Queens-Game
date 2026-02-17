@@ -16,6 +16,11 @@ interface GameState {
   player2Queens: number;
 }
 
+interface AIMoveRequest {
+  gameState: GameState;
+  algorithm?: "greedy" | "minimax" | "dp";
+}
+
 interface Move {
   position: number;
   player: number;
@@ -32,8 +37,17 @@ export const makeMove = async (move: Move): Promise<GameState> => {
   return response.data;
 };
 
-export const getAIMove = async (gameState: GameState): Promise<GameState> => {
-  const response = await axios.post(`${API_BASE_URL}/ai-move`, gameState);
+interface AIMoveRequest {
+  gameState: GameState;
+  algorithm?: "greedy" | "minimax" | "dp";
+}
+
+export const getAIMove = async (gameState: GameState, algorithm?: "greedy" | "minimax" | "dp"): Promise<GameState> => {
+  const request: AIMoveRequest = {
+    gameState: gameState,
+    algorithm: algorithm
+  };
+  const response = await axios.post(`${API_BASE_URL}/ai-move`, request);
   return response.data;
 };
 
