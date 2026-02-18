@@ -9,9 +9,9 @@ import java.util.*;
 
 /*
 /*
- * 2-Player Queens Game Service using Minimax DnC Solver
+ * 2-Player Queens Game Service using Minimax DP Solver
  * ALGORITHMIC REQUIREMENTS:
- * - Minimax DnC Strategy: Uses recursive Minimax with alpha-beta pruning to find optimal moves
+ * - Minimax DP Strategy: Uses recursive Minimax with alpha-beta pruning to find optimal moves
  * - Memoization: Caches board states to avoid redundant computations (DP on game tree)
  * Time Complexity: O(b^d) where b is branching factor and d is depth, optimized by caching
  */
@@ -19,7 +19,7 @@ import java.util.*;
 public class QueensGameService {
 
     @Autowired
-    private MinimaxDnCSolverService minimaxSolver;
+    private MinimaxDpSolverService minimaxSolver;
 
     // Start a new game 
     public GameState initializeGame(int n, List<Integer> regions) {
@@ -105,7 +105,7 @@ public class QueensGameService {
     }
     */
 
-    /* MINIMAX DnC ALGORITHM:
+    /* MINIMAX DP ALGORITHM:
      * Strategy: Uses Minimax with alpha-beta pruning to find optimal move
      * This approach:
      * 1. Looks ahead multiple moves (depth-limited search)
@@ -118,7 +118,7 @@ public class QueensGameService {
             return gameState;
         }
         
-        // Use Minimax DnC solver to get the best move
+        // Use Minimax DP solver to get the best move
         int bestPosition = minimaxSolver.getMinimaxMove(gameState);
         
         if (bestPosition == -1) {

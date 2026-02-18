@@ -31,7 +31,7 @@ public class QueensGameController {
     }
 
     /**
-     * Get Minimax DnC AI's best move
+     * Get Minimax DP AI's best move
      */
     @PostMapping("/ai-move")
     public GameState getAIMove(@RequestBody GameState gameState) {

@@ -7,18 +7,18 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class MinimaxDnCSolverService {
+public class MinimaxDpSolverService {
 
     private static final int WIN_SCORE = 10000;
     private static final int LOSE_SCORE = -10000;
     private static final int MAX_DEPTH = 6; // Limit search depth for performance
 
     /**
-     * Minimax-based Divide and Conquer solver for the Queens game.
+     * Minimax-based Dynamic Programming solver for the Queens game.
      * Uses recursive Minimax with alpha-beta pruning to find optimal moves.
      */
     /**
-     * Minimax-based Divide and Conquer solver for the Queens game.
+     * Minimax-based Dynamic Programming solver for the Queens game.
      * Uses recursive Minimax with alpha-beta pruning to find optimal moves.
      */
     public QueensSolution solveMinimax(int n, List<Integer> regions) {
@@ -36,11 +36,11 @@ public class MinimaxDnCSolverService {
         
         if (result != null && result.moveSequence != null) {
             return new QueensSolution(result.moveSequence, true,
-                "Solved using Minimax-based Divide & Conquer with score: " + result.score);
+                "Solved using Minimax-based Dynamic Programming with score: " + result.score);
         }
         
         return new QueensSolution(new ArrayList<>(), false,
-            "No valid solution found using Minimax-based Divide & Conquer.");
+            "No valid solution found using Minimax-based Dynamic Programming.");
     }
 
     /**
@@ -56,10 +56,10 @@ public class MinimaxDnCSolverService {
         return result != null ? result.bestMove : -1;
     }
 
-    // -------- Core Minimax Divide and Conquer Implementation --------
+    // -------- Core Minimax Dynamic Programming Implementation --------
 
     /**
-     * Main Minimax solver - divides the problem into subproblems and conquers recursively
+     * Main Minimax solver - uses dynamic programming with memoization to optimize recursive calls
      */
     private MinimaxResult minimaxSolve(GameState gameState, int depth, boolean isMaximizing, int alpha, int beta, Map<String, MinimaxResult> memo) {
         // Generate key for memoization
@@ -87,7 +87,7 @@ public class MinimaxDnCSolverService {
             return result;
         }
 
-        // Divide: Generate all valid moves from current state
+        // Generate all valid moves from current state
         if (validMoves.size() == 1) {
             // Simple case: only one move available
             int move = validMoves.get(0);
@@ -105,7 +105,7 @@ public class MinimaxDnCSolverService {
             return null;
         }
 
-        // Conquer: Recursively evaluate each resulting board state
+        // Recursively evaluate each resulting board state
         MinimaxResult bestResult = null;
         int bestScore = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
         int bestMove = -1;
@@ -122,7 +122,7 @@ public class MinimaxDnCSolverService {
         for (int move : validMoves) {
             GameState newState = makeMove(gameState, move);
             
-            // Recursive call - conquer subproblem
+            // Recursive call with memoization
             MinimaxResult childResult = minimaxSolve(newState, depth + 1, !isMaximizing, alpha, beta, memo);
             
             if (childResult != null) {
@@ -152,7 +152,7 @@ public class MinimaxDnCSolverService {
             }
         }
 
-        // Combine: Return the optimal result
+        // Return the optimal result
         if (bestResult != null) {
             List<Integer> sequence = new ArrayList<>();
             sequence.add(bestMove);

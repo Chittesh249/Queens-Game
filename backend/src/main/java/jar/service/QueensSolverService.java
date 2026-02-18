@@ -231,7 +231,7 @@ public class QueensSolverService {
     private GreedySolverService greedySolver;
     
     @Autowired
-    private MinimaxDnCSolverService minimaxSolver;
+    private MinimaxDpSolverService minimaxSolver;
     /**
      * Solve using Greedy algorithm (moved to separate service)
      */
@@ -240,9 +240,9 @@ public class QueensSolverService {
     }
 
     /**
-     * Solve using Minimax-based Divide and Conquer algorithm
+     * Solve using Minimax-based Dynamic Programming algorithm
      */
-    public QueensSolution solveMinimaxDnC(int n, List<Integer> regions) {
+    public QueensSolution solveMinimaxDp(int n, List<Integer> regions) {
         return minimaxSolver.solveMinimax(n, regions);
     }
 
