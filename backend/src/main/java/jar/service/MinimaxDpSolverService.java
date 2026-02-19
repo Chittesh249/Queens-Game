@@ -15,11 +15,7 @@ public class MinimaxDpSolverService {
 
     /**
      * Minimax-based Dynamic Programming solver for the Queens game.
-     * Uses recursive Minimax with alpha-beta pruning to find optimal moves.
-     */
-    /**
-     * Minimax-based Dynamic Programming solver for the Queens game.
-     * Uses recursive Minimax with alpha-beta pruning to find optimal moves.
+     * Uses recursive Minimax with memoization to find optimal moves.
      */
     public QueensSolution solveMinimax(int n, List<Integer> regions) {
         if (regions == null || regions.size() != n * n) {
@@ -32,7 +28,7 @@ public class MinimaxDpSolverService {
         
         // Find optimal solution using Minimax with Memoization
         Map<String, MinimaxResult> memo = new HashMap<>();
-        MinimaxResult result = minimaxSolve(gameState, 0, true, Integer.MIN_VALUE, Integer.MAX_VALUE, memo);
+        MinimaxResult result = minimaxSolve(gameState, 0, true, memo);
         
         if (result != null && result.moveSequence != null) {
             return new QueensSolution(result.moveSequence, true,
@@ -52,7 +48,7 @@ public class MinimaxDpSolverService {
         }
         
         Map<String, MinimaxResult> memo = new HashMap<>();
-        MinimaxResult result = minimax(gameState, 0, true, Integer.MIN_VALUE, Integer.MAX_VALUE, memo);
+        MinimaxResult result = minimax(gameState, 0, true, memo);
         return result != null ? result.bestMove : -1;
     }
 
@@ -61,7 +57,7 @@ public class MinimaxDpSolverService {
     /**
      * Main Minimax solver - uses dynamic programming with memoization to optimize recursive calls
      */
-    private MinimaxResult minimaxSolve(GameState gameState, int depth, boolean isMaximizing, int alpha, int beta, Map<String, MinimaxResult> memo) {
+    private MinimaxResult minimaxSolve(GameState gameState, int depth, boolean isMaximizing, Map<String, MinimaxResult> memo) {
         // Generate key for memoization
         String key = generateKey(gameState, depth, isMaximizing);
         if (memo.containsKey(key)) {
@@ -92,7 +88,7 @@ public class MinimaxDpSolverService {
             // Simple case: only one move available
             int move = validMoves.get(0);
             GameState newState = makeMove(gameState, move);
-            MinimaxResult childResult = minimaxSolve(newState, depth + 1, !isMaximizing, alpha, beta, memo);
+            MinimaxResult childResult = minimaxSolve(newState, depth + 1, !isMaximizing, memo);
             
             if (childResult != null) {
                 List<Integer> sequence = new ArrayList<>();
@@ -110,7 +106,7 @@ public class MinimaxDpSolverService {
         int bestScore = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
         int bestMove = -1;
 
-        // Sort moves for better pruning (heuristic: prefer center positions)
+        // Sort moves by distance to center (heuristic: prefer center positions)
         validMoves.sort((a, b) -> {
             int n = gameState.getN();
             int center = n / 2;
@@ -123,7 +119,7 @@ public class MinimaxDpSolverService {
             GameState newState = makeMove(gameState, move);
             
             // Recursive call with memoization
-            MinimaxResult childResult = minimaxSolve(newState, depth + 1, !isMaximizing, alpha, beta, memo);
+            MinimaxResult childResult = minimaxSolve(newState, depth + 1, !isMaximizing, memo);
             
             if (childResult != null) {
                 int score = childResult.score;
@@ -134,20 +130,13 @@ public class MinimaxDpSolverService {
                         bestScore = score;
                         bestMove = move;
                         bestResult = childResult;
-                        alpha = Math.max(alpha, score);
                     }
                 } else {
                     if (score < bestScore) {
                         bestScore = score;
                         bestMove = move;
                         bestResult = childResult;
-                        beta = Math.min(beta, score);
                     }
-                }
-                
-                // Alpha-beta pruning
-                if (beta <= alpha) {
-                    break;
                 }
             }
         }
@@ -168,7 +157,7 @@ public class MinimaxDpSolverService {
     /**
      * Standard Minimax for single move selection
      */
-    private MinimaxResult minimax(GameState gameState, int depth, boolean isMaximizing, int alpha, int beta, Map<String, MinimaxResult> memo) {
+    private MinimaxResult minimax(GameState gameState, int depth, boolean isMaximizing, Map<String, MinimaxResult> memo) {
         // Generate key for memoization
         String key = generateKey(gameState, depth, isMaximizing);
         if (memo.containsKey(key)) {
@@ -198,7 +187,7 @@ public class MinimaxDpSolverService {
 
         for (int move : validMoves) {
             GameState newState = makeMove(gameState, move);
-            MinimaxResult result = minimax(newState, depth + 1, !isMaximizing, alpha, beta, memo);
+            MinimaxResult result = minimax(newState, depth + 1, !isMaximizing, memo);
             
             if (result != null) {
                 int score = result.score;
@@ -207,18 +196,12 @@ public class MinimaxDpSolverService {
                     if (score > bestScore) {
                         bestScore = score;
                         bestMove = move;
-                        alpha = Math.max(alpha, score);
                     }
                 } else {
                     if (score < bestScore) {
                         bestScore = score;
                         bestMove = move;
-                        beta = Math.min(beta, score);
                     }
-                }
-                
-                if (beta <= alpha) {
-                    break; // Pruning
                 }
             }
         }
