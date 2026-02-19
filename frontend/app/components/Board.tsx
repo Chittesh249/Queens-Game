@@ -20,6 +20,7 @@ interface GameState {
   validMoves: number[];
   player1Queens: number;
   player2Queens: number;
+  solverType?: string;
 }
 
 // Graph Node representing each box on the board
@@ -168,6 +169,7 @@ function assignRegionColors(nodes: GraphNode[], n: number): void {
 export default function Board({ n }: BoardProps) {
   const [boardSeed, setBoardSeed] = useState(0);
   const [gameMode, setGameMode] = useState<GameMode>("human-vs-human");
+  const [solverType, setSolverType] = useState<"dp" | "greedy" | "dnc">("dp");
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showValidMoves, setShowValidMoves] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -263,7 +265,8 @@ export default function Board({ n }: BoardProps) {
     // Small delay for UX
     setTimeout(async () => {
       try {
-        const aiState = await api.getAIMove(currentGameState);
+        const stateWithSolver = { ...currentGameState, solverType };
+        const aiState = await api.getAIMove(stateWithSolver);
         setGameState(aiState);
       } catch (err) {
         console.error("Error getting AI move:", err);
@@ -365,6 +368,31 @@ export default function Board({ n }: BoardProps) {
           <option value="human-vs-human">👤 Player vs Player</option>
           <option value="human-vs-ai">🤖 Player vs AI</option>
         </select>
+
+        {gameMode === "human-vs-ai" && (
+          <select
+            value={solverType}
+            onChange={(e) => setSolverType(e.target.value as "dp" | "greedy" | "dnc")}
+            disabled={gameState?.gameOver}
+            style={{
+              padding: "10px 16px",
+              fontSize: "14px",
+              fontWeight: "500",
+              border: "1px solid #ddd",
+              borderRadius: "6px",
+              background: "#fff",
+              color: "#333",
+              cursor: "pointer",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+              outline: "none",
+              minWidth: "140px",
+            }}
+          >
+            <option value="dp">🧠 Minimax DP</option>
+            <option value="greedy">⚡ Greedy</option>
+            <option value="dnc">🌲 Divide and conquer</option>
+          </select>
+        )}
 
         <button
           onClick={() => setShowValidMoves(!showValidMoves)}

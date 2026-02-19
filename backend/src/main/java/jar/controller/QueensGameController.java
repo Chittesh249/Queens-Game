@@ -31,11 +31,11 @@ public class QueensGameController {
     }
 
     /**
-     * Get Minimax DP AI's best move
+     * Get AI's best move (solver selected by type)
      */
     @PostMapping("/ai-move")
     public GameState getAIMove(@RequestBody GameState gameState) {
-        return gameService.getMinimaxAIMove(gameState);
+        return gameService.getAIMove(gameState);
     }
 
     /**

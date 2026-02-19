@@ -21,6 +21,12 @@ public class QueensGameService {
     @Autowired
     private MinimaxDpSolverService minimaxSolver;
 
+    @Autowired
+    private GreedySolverService greedySolver;
+
+    @Autowired
+    private DnCBacktrackingSolverService dncSolver;
+
     // Start a new game 
     public GameState initializeGame(int n, List<Integer> regions) {
         GameState gameState = new GameState(n, regions);
@@ -29,6 +35,7 @@ public class QueensGameService {
         // Calculate initial valid moves
         List<Integer> validMoves = getAllValidPositions(gameState);
         gameState.setValidMoves(validMoves);
+        gameState.setSolverType("dp"); // Default to DP
         
         return gameState;
     }
@@ -74,37 +81,6 @@ public class QueensGameService {
         return gameState;
     }
 
-    /*
-     * GREEDY ALGORITHM - COMMENTED OUT
-     * Strategy: Select the move that maximizes remaining safe positions
-     * This is a greedy approach because it:
-     * 1. Makes locally optimal choice at each step
-     * 2. Does NOT consider future opponent moves
-     * 3. Does NOT use backtracking
-     * Time Complexity: O(N³) - O(N²) to check all positions; O(N) to evaluate each position
-     *
-    public GameState getGreedyAIMove(GameState gameState) {
-        if (gameState.isGameOver()) {
-            return gameState;
-        }
-        
-        int bestPosition = greedyMove(gameState);
-        
-        if (bestPosition == -1) {
-            // No valid moves - AI loses
-            gameState.setGameOver(true);
-            String winner = gameState.getCurrentPlayer() == 1 ? "Player 2" : "Player 1";
-            gameState.setWinner(winner);
-            gameState.setMessage(winner + " wins! AI has no valid moves.");
-            return gameState;
-        }
-        
-        // Make the greedy move
-        Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
-        return makeMove(aiMove);
-    }
-    */
-
     /* MINIMAX DP ALGORITHM:
      * Strategy: Uses Minimax with alpha-beta pruning to find optimal move
      * This approach:
@@ -113,13 +89,22 @@ public class QueensGameService {
      * 3. Uses alpha-beta pruning for efficiency
      * Time Complexity: O(b^d) where b is branching factor, d is depth
      */
-    public GameState getMinimaxAIMove(GameState gameState) {
+    public GameState getAIMove(GameState gameState) {
         if (gameState.isGameOver()) {
             return gameState;
         }
         
-        // Use Minimax DP solver to get the best move
-        int bestPosition = minimaxSolver.getMinimaxMove(gameState);
+        int bestPosition;
+        String solverType = gameState.getSolverType();
+        
+        if ("greedy".equalsIgnoreCase(solverType)) {
+            bestPosition = greedySolver.getGreedyMove(gameState);
+        } else if ("dnc".equalsIgnoreCase(solverType)) {
+            bestPosition = dncSolver.getDnCMove(gameState);
+        } else {
+            // Default to Minimax DP
+            bestPosition = minimaxSolver.getMinimaxMove(gameState);
+        }
         
         if (bestPosition == -1) {
             // No valid moves - AI loses
@@ -130,7 +115,7 @@ public class QueensGameService {
             return gameState;
         }
         
-        // Make the minimax move
+        // Make the ai move
         Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
         return makeMove(aiMove);
     }
