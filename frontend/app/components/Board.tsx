@@ -388,9 +388,9 @@ export default function Board({ n }: BoardProps) {
               minWidth: "140px",
             }}
           >
-            <option value="dp">🧠 Minimax DP</option>
-            <option value="greedy">⚡ Greedy</option>
-            <option value="dnc">🌲 Divide and conquer</option>
+            <option value="dp"> Minimax DP</option>
+            <option value="greedy"> Greedy</option>
+            <option value="dnc"> Divide and conquer</option>
           </select>
         )}
 
