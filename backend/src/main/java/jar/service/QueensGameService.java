@@ -22,6 +22,18 @@ public class QueensGameService {
     @Autowired
     private BacktrackingSolverService backtrackingSolver;
 
+    @Autowired
+    private GreedySolverService greedySolver;
+
+    @Autowired
+    private MinimaxDpSolverService minimaxSolver;
+
+    @Autowired
+    private DnCBacktrackingSolverService dncBacktrackingSolver;
+
+    @Autowired
+    private BranchAndBoundSolverService branchAndBoundSolver;
+
     // Start a new game 
     public GameState initializeGame(int n, List<Integer> regions) {
         GameState gameState = new GameState(n, regions);
@@ -211,9 +223,28 @@ public class QueensGameService {
         if (gameState.isGameOver()) {
             return gameState;
         }
-        
-        // Use pure Backtracking solver to get the best move
-        int bestPosition = backtrackingSolver.getBacktrackingMove(gameState);
+
+        String solverType = gameState.getSolverType();
+        if (solverType == null || solverType.isEmpty()) {
+            solverType = "dp"; // default to Minimax DP if not specified
+        }
+
+        int bestPosition;
+        switch (solverType.toLowerCase()) {
+            case "greedy":
+                bestPosition = greedySolver.getGreedyMove(gameState);
+                break;
+            case "dnc":
+                bestPosition = dncBacktrackingSolver.getDnCMove(gameState);
+                break;
+            case "bnb":
+                bestPosition = branchAndBoundSolver.getBranchAndBoundMove(gameState);
+                break;
+            case "dp":
+            default:
+                bestPosition = minimaxSolver.getMinimaxMove(gameState);
+                break;
+        }
         
         if (bestPosition == -1) {
             // No valid moves - AI loses
@@ -224,7 +255,7 @@ public class QueensGameService {
             return gameState;
         }
         
-        // Make the backtracking move
+        // Make the selected AI move
         Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
         return makeMove(aiMove);
     }

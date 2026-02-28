@@ -7,7 +7,7 @@ type BoardProps = {
 };
 
 type GameMode = "human-vs-human" | "human-vs-ai";
-type Difficulty = "easy" | "hard";
+type SolverType = "dp" | "greedy" | "dnc" | "bnb";
 
 interface GameState {
   n: number;
@@ -169,7 +169,7 @@ function assignRegionColors(nodes: GraphNode[], n: number): void {
 export default function Board({ n }: BoardProps) {
   const [boardSeed, setBoardSeed] = useState(0);
   const [gameMode, setGameMode] = useState<GameMode>("human-vs-human");
-  const [solverType, setSolverType] = useState<"dp" | "greedy" | "dnc">("dp");
+  const [solverType, setSolverType] = useState<SolverType>("dp");
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showValidMoves, setShowValidMoves] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -372,7 +372,7 @@ export default function Board({ n }: BoardProps) {
         {gameMode === "human-vs-ai" && (
           <select
             value={solverType}
-            onChange={(e) => setSolverType(e.target.value as "dp" | "greedy" | "dnc")}
+            onChange={(e) => setSolverType(e.target.value as SolverType)}
             disabled={gameState?.gameOver}
             style={{
               padding: "10px 16px",
@@ -391,6 +391,7 @@ export default function Board({ n }: BoardProps) {
             <option value="dp"> Minimax DP</option>
             <option value="greedy"> Greedy</option>
             <option value="dnc"> Divide and conquer</option>
+            <option value="bnb"> Branch and Bound</option>
           </select>
         )}
 

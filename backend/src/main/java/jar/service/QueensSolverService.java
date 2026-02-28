@@ -229,6 +229,9 @@ public class QueensSolverService {
 
     @Autowired
     private GreedySolverService greedySolver;
+
+    @Autowired
+    private BranchAndBoundSolverService branchAndBoundSolver;
     
     @Autowired
     private MinimaxDpSolverService minimaxSolver;
@@ -237,6 +240,13 @@ public class QueensSolverService {
      */
     public QueensSolution solveGreedy(int n, List<Integer> regions) {
         return greedySolver.solveGreedy(n, regions);
+    }
+
+    /**
+     * Solve using Branch and Bound algorithm with pruning.
+     */
+    public QueensSolution solveBranchAndBound(int n, List<Integer> regions) {
+        return branchAndBoundSolver.solveBranchAndBound(n, regions);
     }
 
     /**
