@@ -111,4 +111,15 @@ public class GameState {
     public void setPlayer2Queens(int player2Queens) {
         this.player2Queens = player2Queens;
     }
+
+    // Solver type: "greedy" or "dp"
+    private String solverType;
+
+    public String getSolverType() {
+        return solverType;
+    }
+
+    public void setSolverType(String solverType) {
+        this.solverType = solverType;
+    }
 }
