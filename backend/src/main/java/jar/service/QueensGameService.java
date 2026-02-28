@@ -2,19 +2,25 @@ package jar.service;
 
 import jar.model.GameState;
 import jar.model.Move;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 /*
- * 2-Player Queens Game Service implementing Greedy Algorithm 
+ * 2-Player Queens Game Service implementing Backtracking DnC Algorithm 
  * ALGORITHMIC REQUIREMENTS:
- * - Greedy Strategy: At each turn, select the position that maximizes future safe positions. No backtracking or exhaustive search. 
- * Locally optimal decision making
- * Time Complexity: O(N³) per move evaluation
+ * - Backtracking DnC Strategy: Uses recursive backtracking with divide and conquer
+ * - Divide: Generate all valid moves for current state
+ * - Conquer: Recursively solve smaller subproblems
+ * - Combine: Return best solution from subproblems
+ * Time Complexity: O(N!) worst case, but pruned by constraints
  */
 @Service
 public class QueensGameService {
+
+    @Autowired
+    private BacktrackingSolverService backtrackingSolver;
 
     // Start a new game 
     public GameState initializeGame(int n, List<Integer> regions) {
@@ -189,6 +195,38 @@ public class QueensGameService {
         temp.setCurrentPlayer(playerWhoJustMoved);
         
         return getAllValidPositions(temp).size();
+    }
+
+    /*
+     * PURE BACKTRACKING ALGORITHM:
+     * Strategy: Uses pure backtracking to find optimal move
+     * This approach:
+     * 1. Try a valid move
+     * 2. Recursively check if it leads to a solution
+     * 3. If solution found, return it
+     * 4. If no solution, undo move (backtrack) and try next option
+     * Time Complexity: O(N!) worst case, but heavily pruned by constraints
+     */
+    public GameState getBacktrackingAIMove(GameState gameState) {
+        if (gameState.isGameOver()) {
+            return gameState;
+        }
+        
+        // Use pure Backtracking solver to get the best move
+        int bestPosition = backtrackingSolver.getBacktrackingMove(gameState);
+        
+        if (bestPosition == -1) {
+            // No valid moves - AI loses
+            gameState.setGameOver(true);
+            String winner = gameState.getCurrentPlayer() == 1 ? "Player 2" : "Player 1";
+            gameState.setWinner(winner);
+            gameState.setMessage(winner + " wins! AI has no valid moves.");
+            return gameState;
+        }
+        
+        // Make the backtracking move
+        Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
+        return makeMove(aiMove);
     }
 
     // Get all valid moves for current state
