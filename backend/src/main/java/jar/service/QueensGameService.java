@@ -20,16 +20,15 @@ import java.util.*;
 public class QueensGameService {
 
     @Autowired
-    private BacktrackingSolverService backtrackingSolver;
+    private BacktrackingTwoPlayerService backtrackingTwoPlayerSolver;
 
     @Autowired
-    private PureBacktrackingTwoPlayerService pureBacktrackingTwoPlayerSolver;
+    private MinimaxDpSolverService minimaxSolver;
 
     @Autowired
     private GreedySolverService greedySolver;
 
-    @Autowired
-    private DnCBacktrackingSolverService dncSolver;
+
 
     // Start a new game 
     public GameState initializeGame(int n, List<Integer> regions) {
@@ -226,29 +225,14 @@ public class QueensGameService {
         
         // Select solver based on solverType
         if ("greedy".equalsIgnoreCase(solverType)) {
-            // Use greedy move selection
             bestPosition = greedyMove(gameState);
-        } else if ("dnc".equalsIgnoreCase(solverType)) {
-            // Use DnC solver
-            var solution = dncSolver.solveDnC(gameState.getN(), gameState.getRegions());
-            if (solution.isSolved() && !solution.getQueenPositions().isEmpty()) {
-                // Find next position from solution that's valid
-                for (int pos : solution.getQueenPositions()) {
-                    if (isValidPosition(gameState, pos)) {
-                        bestPosition = pos;
-                        break;
-                    }
-                }
-            }
-            if (bestPosition == -1) {
-                bestPosition = backtrackingSolver.getBacktrackingMove(gameState);
-            }
+        } else if ("dp".equalsIgnoreCase(solverType)) {
+            bestPosition = minimaxSolver.getMinimaxMove(gameState);
         } else if ("backtracking".equalsIgnoreCase(solverType)) {
-            // Use pure backtracking for two-player
-            bestPosition = pureBacktrackingTwoPlayerSolver.getMove(gameState);
+            bestPosition = backtrackingTwoPlayerSolver.getMove(gameState);
         } else {
-            // Default: use original backtracking solver (Minimax DP)
-            bestPosition = backtrackingSolver.getTwoPlayerMove(gameState);
+            // Default to backtracking for others or unknown
+            bestPosition = backtrackingTwoPlayerSolver.getMove(gameState);
         }
         
         if (bestPosition == -1) {

@@ -169,7 +169,7 @@ function assignRegionColors(nodes: GraphNode[], n: number): void {
 export default function Board({ n }: BoardProps) {
   const [boardSeed, setBoardSeed] = useState(0);
   const [gameMode, setGameMode] = useState<GameMode>("human-vs-human");
-  const [solverType, setSolverType] = useState<"dp" | "greedy" | "dnc" | "backtracking">("dp");
+  const [solverType, setSolverType] = useState<"dp" | "greedy" | "dnc" | "backtracking">("backtracking");
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showValidMoves, setShowValidMoves] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -388,9 +388,8 @@ export default function Board({ n }: BoardProps) {
               minWidth: "140px",
             }}
           >
-            <option value="dp"> Minimax DP</option>
             <option value="greedy"> Greedy</option>
-            <option value="dnc"> Divide and conquer</option>
+            <option value="dp"> Dynamic Programming</option>
             <option value="backtracking"> Backtracking</option>
           </select>
         )}

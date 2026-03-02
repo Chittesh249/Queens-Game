@@ -135,28 +135,7 @@ export default function HomePage() {
       <div style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>
         2-player strategy game with AI
       </div>
-      
-      {/* Navigation Link */}
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <Link href="/navigation">
-          <div style={{
-            display: "inline-flex",
-            alignItems: "center",
-            padding: "10px 20px",
-            backgroundColor: "white",
-            borderRadius: "8px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            border: "1px solid #e5e7eb",
-            textDecoration: "none",
-            color: "#374151",
-            fontWeight: "500",
-            transition: "all 0.2s"
-          }}>
-            <span style={{ marginRight: "8px" }}>📊</span>
-            Analysis Dashboard
-          </div>
-        </Link>
-      </div>
+
 
       <div
         style={{
