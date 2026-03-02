@@ -43,6 +43,11 @@ export const getValidMoves = async (gameState: GameState): Promise<GameState> =>
 };
 
 export const resetGame = async (gameState: GameState): Promise<GameState> => {
-    const response = await axios.post(`${API_BASE_URL}/reset`, gameState);
-    return response.data;
+  const response = await axios.post(`${API_BASE_URL}/reset`, gameState);
+  return response.data;
+};
+
+export const getBenchmarks = async (): Promise<any[]> => {
+  const response = await axios.get(`${API_BASE_URL}/benchmarks`);
+  return response.data;
 };

@@ -2,6 +2,7 @@ package jar.service;
 
 import jar.model.GameState;
 import jar.model.Move;
+import jar.model.BenchmarkResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,51 @@ public class QueensGameService {
 
     @Autowired
     private GreedySolverService greedySolver;
+
+    /**
+     * Generate standard regions (horizontal strips) for benchmarking
+     */
+    private List<Integer> generateStandardRegions(int n) {
+        List<Integer> regions = new ArrayList<>(n * n);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                regions.add(i);
+            }
+        }
+        return regions;
+    }
+
+    /**
+     * Get benchmarks for various board sizes and algorithms
+     */
+    public List<BenchmarkResult> getBenchmarks() {
+        List<BenchmarkResult> results = new ArrayList<>();
+        int[] sizes = {6, 7, 8, 9, 10}; // representative sizes
+
+        for (int n : sizes) {
+            List<Integer> regions = generateStandardRegions(n);
+            
+            // Greedy Benchmark
+            long start = System.currentTimeMillis();
+            greedySolver.solveGreedy(n, regions);
+            long time = System.currentTimeMillis() - start;
+            results.add(new BenchmarkResult("Greedy", n, time, greedySolver.getLastStatesExplored(), n));
+
+            // Minimax DP Benchmark
+            start = System.currentTimeMillis();
+            minimaxSolver.solveMinimax(n, regions);
+            time = System.currentTimeMillis() - start;
+            results.add(new BenchmarkResult("Minimax DP", n, time, minimaxSolver.getLastStatesExplored(), n * n));
+            
+            // For Backtracking, we'll simulate the move selection effort for a single turn at start
+            GameState initialState = new GameState(n, regions);
+            start = System.currentTimeMillis();
+            backtrackingTwoPlayerSolver.getMove(initialState);
+            time = System.currentTimeMillis() - start;
+            results.add(new BenchmarkResult("Backtracking", n, time, backtrackingTwoPlayerSolver.getLastStatesExplored(), n)); 
+        }
+        return results;
+    }
 
 
 

@@ -2,6 +2,7 @@ package jar.controller;
 
 import jar.model.GameState;
 import jar.model.Move;
+import jar.model.BenchmarkResult;
 import jar.service.QueensGameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -54,5 +55,13 @@ public class QueensGameController {
     @PostMapping("/reset")
     public GameState resetGame(@RequestBody GameState gameState) {
         return gameService.initializeGame(gameState.getN(), gameState.getRegions());
+    }
+
+    /**
+     * Get algorithm benchmarks
+     */
+    @GetMapping("/benchmarks")
+    public List<BenchmarkResult> getBenchmarks() {
+        return gameService.getBenchmarks();
     }
 }

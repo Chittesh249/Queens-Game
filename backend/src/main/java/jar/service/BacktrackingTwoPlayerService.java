@@ -21,6 +21,7 @@ import java.util.*;
  */
 @Service
 public class BacktrackingTwoPlayerService {
+    private int statesExplored = 0;
 
     /**
      * Returns a winning move if one exists, else returns any legal move, else -1.
@@ -28,6 +29,7 @@ public class BacktrackingTwoPlayerService {
      */
     public int getMove(GameState gameState) {
         if (gameState == null || gameState.isGameOver()) return -1;
+        statesExplored = 0;
 
         int n = gameState.getN();
         List<Integer> regions = gameState.getRegions();
@@ -78,7 +80,7 @@ public class BacktrackingTwoPlayerService {
                                         List<Integer> queens,
                                         Set<Integer> usedRegions,
                                         Set<Integer> occupied) {
-
+        statesExplored++;
         List<Integer> moves = getAllLegalMoves(n, regions, queens, usedRegions, occupied);
 
         // Base case: no move -> current player loses
@@ -156,5 +158,9 @@ public class BacktrackingTwoPlayerService {
         }
 
         return true;
+    }
+
+    public int getLastStatesExplored() {
+        return statesExplored;
     }
 }

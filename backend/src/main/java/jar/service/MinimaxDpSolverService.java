@@ -12,6 +12,7 @@ public class MinimaxDpSolverService {
     private static final int WIN_SCORE = 10000;
     private static final int LOSE_SCORE = -10000;
     private static final int MAX_DEPTH = 6; // Limit search depth for performance
+    private int statesExplored = 0;
 
     /**
      * Minimax-based Dynamic Programming solver for the Queens game.
@@ -27,6 +28,7 @@ public class MinimaxDpSolverService {
         GameState gameState = new GameState(n, regions);
         
         // Find optimal solution using Minimax with Memoization
+        statesExplored = 0;
         Map<String, MinimaxResult> memo = new HashMap<>();
         MinimaxResult result = minimaxSolve(gameState, 0, true, memo);
         
@@ -58,6 +60,7 @@ public class MinimaxDpSolverService {
      * Main Minimax solver - uses dynamic programming with memoization to optimize recursive calls
      */
     private MinimaxResult minimaxSolve(GameState gameState, int depth, boolean isMaximizing, Map<String, MinimaxResult> memo) {
+        statesExplored++;
         // Generate key for memoization
         String key = generateKey(gameState, depth, isMaximizing);
         if (memo.containsKey(key)) {
@@ -334,5 +337,9 @@ public class MinimaxDpSolverService {
             this.moveSequence = moveSequence;
             this.bestMove = bestMove;
         }
+    }
+
+    public int getLastStatesExplored() {
+        return statesExplored;
     }
 }

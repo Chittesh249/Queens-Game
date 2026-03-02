@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Board from "./components/Board";
+import ComplexityAnalysis from "./components/ComplexityAnalysis";
 import Link from "next/link";
 
 export default function HomePage() {
   const [n, setN] = useState<number | "">("");
   const [showGame, setShowGame] = useState(false);
+  const [showComplexity, setShowComplexity] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const minN = 6;
 
@@ -115,6 +117,25 @@ export default function HomePage() {
     );
   }
 
+  if (showComplexity) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+          fontFamily: "'Inter', sans-serif",
+          padding: "20px",
+        }}
+      >
+        <ComplexityAnalysis onBack={() => setShowComplexity(false)} />
+      </div>
+    );
+  }
+
 
   return (
     <div
@@ -135,6 +156,36 @@ export default function HomePage() {
       <div style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>
         2-player strategy game with AI
       </div>
+
+      <button
+        onClick={() => setShowComplexity(true)}
+        style={{
+          padding: "10px 24px",
+          fontSize: "14px",
+          fontWeight: "600",
+          color: "#fff",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          border: "none",
+          borderRadius: "12px",
+          cursor: "pointer",
+          marginBottom: "30px",
+          boxShadow: "0 10px 20px -5px rgba(118, 75, 162, 0.4)",
+          transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px"
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = "translateY(-3px)";
+          e.currentTarget.style.boxShadow = "0 15px 25px -5px rgba(118, 75, 162, 0.5)";
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 10px 20px -5px rgba(118, 75, 162, 0.4)";
+        }}
+      >
+        <span style={{ fontSize: "18px" }}>📊</span> View Algorithm Complexity
+      </button>
 
 
       <div

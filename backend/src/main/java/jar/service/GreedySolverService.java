@@ -8,6 +8,7 @@ import java.util.*;
 
 @Service
 public class GreedySolverService {
+    private int statesExplored = 0;
 
     /**
      * Greedy algorithm to solve the Queens game.
@@ -23,6 +24,7 @@ public class GreedySolverService {
             return new QueensSolution(new ArrayList<>(), false, 
                 "Invalid regions array. Expected size: " + (n * n));
         }
+        statesExplored = 0;
 
         // Track which regions have queens
         Set<Integer> regionsWithQueens = new HashSet<>();
@@ -55,6 +57,7 @@ public class GreedySolverService {
             int minConflicts = Integer.MAX_VALUE;
 
             for (int pos : candidates) {
+                statesExplored++;
                 if (attacked[pos]) {
                     continue; // Skip attacked positions
                 }
@@ -318,5 +321,9 @@ public class GreedySolverService {
         }
         
         return true;
+    }
+
+    public int getLastStatesExplored() {
+        return statesExplored;
     }
 }
