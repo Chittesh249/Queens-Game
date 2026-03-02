@@ -7,39 +7,24 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 /**
- * Branch and Bound Solver for the Queens Game using pruning.
+ * Branch and Bound (Alpha-Beta) Minimax Solver for the Queens Game.
  *
- * Objective:
- * - Maximize the number of queens placed on the board
- * - Subject to:
- *   1. No two queens attack each other (rows, columns, diagonals)
- *   2. At most one queen per region
+ * This reuses the Minimax DP approach but adds alpha-beta pruning to
+ * aggressively cut branches that cannot influence the final decision.
  *
- * Branch and Bound Strategy:
- * - Branch: for each row, either place a queen in a valid column or skip the row
- * - Bound: compute an optimistic upper bound on how many additional queens can be placed:
- *     currentQueens + min(remainingRows, remainingUnusedRegions)
- *   If this upper bound is not better than the best solution found so far, prune the branch.
- *
- * This guarantees that the returned solution (which may be partial) uses the
- * maximum possible number of queens consistent with the constraints.
+ * - State representation and evaluation follow {@link MinimaxDpSolverService}.
+ * - Branch-and-bound is implemented via alpha (best for maximizer so far)
+ *   and beta (best for minimizer so far) bounds.
  */
 @Service
 public class BranchAndBoundSolverService {
 
-    private int n;
-    private List<Integer> regions;
-    private Set<Integer> allRegions;
-
-    private List<Integer> bestSolution;
-    private int bestScore;
+    private static final int WIN_SCORE = 10000;
+    private static final int LOSE_SCORE = -10000;
+    private static final int MAX_DEPTH = 6; // keep consistent with MinimaxDpSolverService
 
     /**
-     * Solve the Queens puzzle using Branch and Bound with pruning.
-     *
-     * @param n       board size (n x n)
-     * @param regions region id for each cell (size must be n * n)
-     * @return best solution found and whether it places n queens
+     * Solve the puzzle from an empty board using alpha-beta Minimax.
      */
     public QueensSolution solveBranchAndBound(int n, List<Integer> regions) {
         if (regions == null || regions.size() != n * n) {
@@ -47,244 +32,285 @@ public class BranchAndBoundSolverService {
                 "Invalid regions array. Expected size: " + (n * n));
         }
 
-        this.n = n;
-        this.regions = regions;
-        this.allRegions = new HashSet<>(regions);
+        GameState gameState = new GameState(n, regions);
 
-        this.bestSolution = new ArrayList<>();
-        this.bestScore = 0;
+        Map<String, AlphaBetaResult> memo = new HashMap<>();
+        AlphaBetaResult result = alphaBetaSolve(
+            gameState,
+            0,
+            true,
+            Integer.MIN_VALUE,
+            Integer.MAX_VALUE,
+            memo
+        );
 
-        boolean[] cols = new boolean[n];
-        boolean[] diag1 = new boolean[2 * n - 1]; // row - col + (n - 1)
-        boolean[] diag2 = new boolean[2 * n - 1]; // row + col
-        Set<Integer> usedRegions = new HashSet<>();
-        List<Integer> current = new ArrayList<>();
-
-        branchAndBound(0, cols, diag1, diag2, usedRegions, current);
-
-        boolean solved = bestScore == n;
-        String message;
-        if (solved) {
-            message = "Solved using Branch and Bound with pruning.";
-        } else {
-            message = "Best partial solution using Branch and Bound with pruning. "
-                    + "Placed " + bestScore + " queens.";
+        if (result != null && result.moveSequence != null) {
+            return new QueensSolution(result.moveSequence, true,
+                "Solved using Branch and Bound (alpha-beta Minimax) with score: " + result.score);
         }
 
-        return new QueensSolution(new ArrayList<>(bestSolution), solved, message);
+        return new QueensSolution(new ArrayList<>(), false,
+            "No valid solution found using Branch and Bound (alpha-beta Minimax).");
     }
 
     /**
-     * Get a single AI move using Branch and Bound, starting from the current game state.
-     * This evaluates each valid move and selects the one that leads to the highest
-     * total number of queens after optimal completion (according to Branch and Bound).
-     *
-     * @param gameState current game state
-     * @return best move position, or -1 if no valid moves
+     * Get a single AI move for the current game state using alpha-beta Minimax.
      */
     public int getBranchAndBoundMove(GameState gameState) {
         if (gameState.isGameOver()) {
             return -1;
         }
 
-        int boardSize = gameState.getN();
-        List<Integer> regionsList = gameState.getRegions();
-        List<Integer> queenPositions = gameState.getQueenPositions();
+        Map<String, AlphaBetaResult> memo = new HashMap<>();
+        AlphaBetaResult result = alphaBeta(
+            gameState,
+            0,
+            true,
+            Integer.MIN_VALUE,
+            Integer.MAX_VALUE,
+            memo
+        );
+        return result != null ? result.bestMove : -1;
+    }
+
+    // ---------- Core Alpha-Beta Minimax with Memoization ----------
+
+    /**
+     * Full-solution alpha-beta Minimax with memoization, returning best
+     * score and sequence of moves.
+     */
+    private AlphaBetaResult alphaBetaSolve(GameState gameState,
+                                           int depth,
+                                           boolean isMaximizing,
+                                           int alpha,
+                                           int beta,
+                                           Map<String, AlphaBetaResult> memo) {
+        String key = generateKey(gameState, depth, isMaximizing);
+        if (memo.containsKey(key)) {
+            return memo.get(key);
+        }
 
         List<Integer> validMoves = getAllValidPositions(gameState);
+
+        // Base case: no valid moves -> current player loses
         if (validMoves.isEmpty()) {
-            return -1;
+            int score = isMaximizing ? LOSE_SCORE + depth : WIN_SCORE - depth;
+            AlphaBetaResult result = new AlphaBetaResult(score, new ArrayList<>(), -1);
+            memo.put(key, result);
+            return result;
         }
 
-        int existingQueens = queenPositions.size();
+        // Base case: depth limit -> heuristic evaluation
+        if (depth >= MAX_DEPTH) {
+            int score = evaluateGameState(gameState, isMaximizing);
+            AlphaBetaResult result = new AlphaBetaResult(score, new ArrayList<>(), -1);
+            memo.put(key, result);
+            return result;
+        }
+
+        // Heuristic ordering: prefer moves closer to the center
+        validMoves.sort((a, b) -> {
+            int n = gameState.getN();
+            int center = n / 2;
+            int distA = Math.abs((a / n) - center) + Math.abs((a % n) - center);
+            int distB = Math.abs((b / n) - center) + Math.abs((b % n) - center);
+            return Integer.compare(distA, distB);
+        });
+
+        AlphaBetaResult bestResult = null;
+        int bestScore = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
         int bestMove = -1;
-        int bestTotalQueens = -1;
 
-        // Evaluate each valid move using Branch and Bound completion
-        for (int movePos : validMoves) {
-            // Initialize shared state for this candidate
-            this.n = boardSize;
-            this.regions = regionsList;
-            this.allRegions = new HashSet<>(regionsList);
-            this.bestSolution = new ArrayList<>();
-            this.bestScore = 0;
+        for (int move : validMoves) {
+            GameState newState = makeMove(gameState, move);
 
-            boolean[] cols = new boolean[n];
-            boolean[] diag1 = new boolean[2 * n - 1];
-            boolean[] diag2 = new boolean[2 * n - 1];
-            Set<Integer> usedRegions = new HashSet<>();
+            AlphaBetaResult child = alphaBetaSolve(
+                newState,
+                depth + 1,
+                !isMaximizing,
+                alpha,
+                beta,
+                memo
+            );
 
-            // Mark constraints from already placed queens (fixed)
-            for (int qPos : queenPositions) {
-                int r = qPos / n;
-                int c = qPos % n;
-                int d1Index = r - c + (n - 1);
-                int d2Index = r + c;
-                cols[c] = true;
-                diag1[d1Index] = true;
-                diag2[d2Index] = true;
-                usedRegions.add(regionsList.get(qPos));
-            }
-
-            // Place the candidate move
-            int row = movePos / n;
-            int col = movePos % n;
-            int d1Index = row - col + (n - 1);
-            int d2Index = row + col;
-            int region = regionsList.get(movePos);
-
-            // Safety check – should already be valid, but guard against conflicting constraints
-            if (cols[col] || diag1[d1Index] || diag2[d2Index] || usedRegions.contains(region)) {
+            if (child == null) {
                 continue;
             }
 
-            cols[col] = true;
-            diag1[d1Index] = true;
-            diag2[d2Index] = true;
-            usedRegions.add(region);
+            int score = child.score;
 
-            List<Integer> current = new ArrayList<>();
-            current.add(movePos);
+            if (isMaximizing) {
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                    bestResult = child;
+                }
+                alpha = Math.max(alpha, bestScore);
+            } else {
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                    bestResult = child;
+                }
+                beta = Math.min(beta, bestScore);
+            }
 
-            // Run Branch and Bound from this candidate
-            branchAndBound(0, cols, diag1, diag2, usedRegions, current);
-
-            int totalQueens = existingQueens + bestScore;
-            if (totalQueens > bestTotalQueens) {
-                bestTotalQueens = totalQueens;
-                bestMove = movePos;
+            // Branch and Bound: prune when the interval collapses
+            if (beta <= alpha) {
+                break;
             }
         }
 
-        return bestMove;
+        if (bestResult != null) {
+            List<Integer> sequence = new ArrayList<>();
+            sequence.add(bestMove);
+            sequence.addAll(bestResult.moveSequence);
+            AlphaBetaResult result = new AlphaBetaResult(bestScore, sequence, bestMove);
+            memo.put(key, result);
+            return result;
+        }
+
+        return null;
     }
 
     /**
-     * Recursive Branch and Bound search.
-     *
-     * @param row         current row index (0-based)
-     * @param cols        columns that already have queens
-     * @param diag1       main diagonals that already have queens
-     * @param diag2       anti-diagonals that already have queens
-     * @param usedRegions regions that already contain a queen
-     * @param current     current partial solution (positions)
+     * Alpha-beta Minimax tailored for picking just the next move.
      */
-    private void branchAndBound(int row,
-                                boolean[] cols,
-                                boolean[] diag1,
-                                boolean[] diag2,
-                                Set<Integer> usedRegions,
-                                List<Integer> current) {
-        int placed = current.size();
-
-        // Update best solution seen so far
-        if (placed > bestScore) {
-            bestScore = placed;
-            bestSolution = new ArrayList<>(current);
-
-            // Optimal solution found: cannot place more than n queens
-            if (bestScore == n) {
-                return;
-            }
+    private AlphaBetaResult alphaBeta(GameState gameState,
+                                      int depth,
+                                      boolean isMaximizing,
+                                      int alpha,
+                                      int beta,
+                                      Map<String, AlphaBetaResult> memo) {
+        String key = generateKey(gameState, depth, isMaximizing);
+        if (memo.containsKey(key)) {
+            return memo.get(key);
         }
 
-        // All rows processed
-        if (row == n) {
-            return;
+        List<Integer> validMoves = getAllValidPositions(gameState);
+
+        // Base: no moves -> current player loses
+        if (validMoves.isEmpty()) {
+            int score = isMaximizing ? LOSE_SCORE + depth : WIN_SCORE - depth;
+            AlphaBetaResult result = new AlphaBetaResult(score, new ArrayList<>(), -1);
+            memo.put(key, result);
+            return result;
         }
 
-        // Branch and Bound: compute optimistic upper bound
-        int remainingRows = n - row;
-        int remainingRegions = allRegions.size() - usedRegions.size();
-        int upperBound = placed + Math.min(remainingRows, remainingRegions);
-
-        // If even the optimistic bound cannot beat current best, prune
-        if (upperBound <= bestScore) {
-            return;
+        // Base: depth limit
+        if (depth >= MAX_DEPTH) {
+            int score = evaluateGameState(gameState, isMaximizing);
+            AlphaBetaResult result = new AlphaBetaResult(score, new ArrayList<>(), -1);
+            memo.put(key, result);
+            return result;
         }
 
-        // BRANCH 1: Try placing a queen in each valid column of this row
-        for (int col = 0; col < n; col++) {
-            if (cols[col]) {
+        // Move ordering as above
+        validMoves.sort((a, b) -> {
+            int n = gameState.getN();
+            int center = n / 2;
+            int distA = Math.abs((a / n) - center) + Math.abs((a % n) - center);
+            int distB = Math.abs((b / n) - center) + Math.abs((b % n) - center);
+            return Integer.compare(distA, distB);
+        });
+
+        int bestMove = -1;
+        int bestScore = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+
+        for (int move : validMoves) {
+            GameState newState = makeMove(gameState, move);
+
+            AlphaBetaResult child = alphaBeta(
+                newState,
+                depth + 1,
+                !isMaximizing,
+                alpha,
+                beta,
+                memo
+            );
+
+            if (child == null) {
                 continue;
             }
 
-            int d1Index = row - col + (n - 1);
-            int d2Index = row + col;
+            int score = child.score;
 
-            if (diag1[d1Index] || diag2[d2Index]) {
-                continue;
+            if (isMaximizing) {
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+                alpha = Math.max(alpha, bestScore);
+            } else {
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+                beta = Math.min(beta, bestScore);
             }
 
-            int position = row * n + col;
-            int region = regions.get(position);
-
-            if (usedRegions.contains(region)) {
-                continue;
-            }
-
-            // Place queen
-            cols[col] = true;
-            diag1[d1Index] = true;
-            diag2[d2Index] = true;
-            usedRegions.add(region);
-            current.add(position);
-
-            branchAndBound(row + 1, cols, diag1, diag2, usedRegions, current);
-
-            // Undo placement
-            current.remove(current.size() - 1);
-            usedRegions.remove(region);
-            cols[col] = false;
-            diag1[d1Index] = false;
-            diag2[d2Index] = false;
-
-            // If an optimal solution (n queens) was found deeper in the tree, stop exploring
-            if (bestScore == n) {
-                return;
+            if (beta <= alpha) {
+                break;
             }
         }
 
-        // BRANCH 2: Skip this row (allowing partial solutions with fewer than n queens)
-        branchAndBound(row + 1, cols, diag1, diag2, usedRegions, current);
+        AlphaBetaResult result = new AlphaBetaResult(bestScore, new ArrayList<>(), bestMove);
+        memo.put(key, result);
+        return result;
     }
 
-    /**
-     * Get all valid positions for the current game state using standard safety rules.
-     */
+    // ---------- Helper methods (mirroring MinimaxDpSolverService) ----------
+
+    private String generateKey(GameState gameState, int depth, boolean isMaximizing) {
+        List<Integer> sortedQueens = new ArrayList<>(gameState.getQueenPositions());
+        Collections.sort(sortedQueens);
+        return sortedQueens.toString() + "|" + gameState.getCurrentPlayer() + "|" + depth + "|" + isMaximizing;
+    }
+
+    private GameState makeMove(GameState gameState, int position) {
+        GameState newState = new GameState();
+        newState.setN(gameState.getN());
+        newState.setRegions(new ArrayList<>(gameState.getRegions()));
+        newState.setQueenPositions(new ArrayList<>(gameState.getQueenPositions()));
+        newState.getQueenPositions().add(position);
+        newState.setCurrentPlayer(gameState.getCurrentPlayer() == 1 ? 2 : 1);
+        newState.setGameOver(false);
+        newState.setPlayer1Queens(gameState.getPlayer1Queens());
+        newState.setPlayer2Queens(gameState.getPlayer2Queens());
+        return newState;
+    }
+
     private List<Integer> getAllValidPositions(GameState gameState) {
         List<Integer> validMoves = new ArrayList<>();
-        int boardSize = gameState.getN();
-        List<Integer> regionsList = gameState.getRegions();
+        int n = gameState.getN();
+        List<Integer> regions = gameState.getRegions();
         List<Integer> queenPositions = gameState.getQueenPositions();
 
-        for (int pos = 0; pos < boardSize * boardSize; pos++) {
-            if (isSafe(pos, queenPositions, boardSize, regionsList)) {
-                validMoves.add(pos);
+        for (int row = 0; row < n; row++) {
+            for (int col = 0; col < n; col++) {
+                int position = row * n + col;
+                if (isSafe(queenPositions, position, n, regions)) {
+                    validMoves.add(position);
+                }
             }
         }
 
         return validMoves;
     }
 
-    /**
-     * Check if placing a queen at the given position is safe with respect to
-     * existing queens and region constraints.
-     */
-    private boolean isSafe(int position, List<Integer> queenPositions, int n,
-                           List<Integer> regionsList) {
+    private boolean isSafe(List<Integer> queenPositions, int position, int n, List<Integer> regions) {
         int row = position / n;
         int col = position % n;
-        int region = regionsList.get(position);
+        int region = regions.get(position);
 
         // Region constraint: at most one queen per region
         for (int queenPos : queenPositions) {
-            if (regionsList.get(queenPos) == region) {
+            if (regions.get(queenPos) == region) {
                 return false;
             }
         }
 
-        // Attack constraints
+        // Attacks: row, column, and diagonals
         for (int queenPos : queenPositions) {
             int qRow = queenPos / n;
             int qCol = queenPos % n;
@@ -296,6 +322,50 @@ public class BranchAndBoundSolverService {
         }
 
         return true;
+    }
+
+    private int evaluateGameState(GameState gameState, boolean isMaximizingPlayer) {
+        int n = gameState.getN();
+        List<Integer> queenPositions = gameState.getQueenPositions();
+        List<Integer> regions = gameState.getRegions();
+
+        // Count available positions for current pattern
+        int availablePositions = 0;
+        for (int row = 0; row < n; row++) {
+            for (int col = 0; col < n; col++) {
+                int position = row * n + col;
+                if (isSafe(queenPositions, position, n, regions)) {
+                    availablePositions++;
+                }
+            }
+        }
+
+        // Center control heuristic
+        int centerControl = 0;
+        int center = n / 2;
+        for (int pos : queenPositions) {
+            int row = pos / n;
+            int col = pos % n;
+            int distance = Math.abs(row - center) + Math.abs(col - center);
+            centerControl += (n - distance);
+        }
+
+        int score = availablePositions * 10 + centerControl;
+        return isMaximizingPlayer ? score : -score;
+    }
+
+    // ---------- Result holder ----------
+
+    private static class AlphaBetaResult {
+        int score;
+        List<Integer> moveSequence;
+        int bestMove;
+
+        AlphaBetaResult(int score, List<Integer> moveSequence, int bestMove) {
+            this.score = score;
+            this.moveSequence = moveSequence;
+            this.bestMove = bestMove;
+        }
     }
 }
 
