@@ -22,6 +22,15 @@ public class QueensGameService {
     @Autowired
     private BacktrackingSolverService backtrackingSolver;
 
+    @Autowired
+    private PureBacktrackingTwoPlayerService pureBacktrackingTwoPlayerSolver;
+
+    @Autowired
+    private GreedySolverService greedySolver;
+
+    @Autowired
+    private DnCBacktrackingSolverService dncSolver;
+
     // Start a new game 
     public GameState initializeGame(int n, List<Integer> regions) {
         GameState gameState = new GameState(n, regions);
@@ -212,8 +221,35 @@ public class QueensGameService {
             return gameState;
         }
         
-        // Use pure Backtracking solver to get the best move
-        int bestPosition = backtrackingSolver.getBacktrackingMove(gameState);
+        int bestPosition = -1;
+        String solverType = gameState.getSolverType();
+        
+        // Select solver based on solverType
+        if ("greedy".equalsIgnoreCase(solverType)) {
+            // Use greedy move selection
+            bestPosition = greedyMove(gameState);
+        } else if ("dnc".equalsIgnoreCase(solverType)) {
+            // Use DnC solver
+            var solution = dncSolver.solveDnC(gameState.getN(), gameState.getRegions());
+            if (solution.isSolved() && !solution.getQueenPositions().isEmpty()) {
+                // Find next position from solution that's valid
+                for (int pos : solution.getQueenPositions()) {
+                    if (isValidPosition(gameState, pos)) {
+                        bestPosition = pos;
+                        break;
+                    }
+                }
+            }
+            if (bestPosition == -1) {
+                bestPosition = backtrackingSolver.getBacktrackingMove(gameState);
+            }
+        } else if ("backtracking".equalsIgnoreCase(solverType)) {
+            // Use pure backtracking for two-player
+            bestPosition = pureBacktrackingTwoPlayerSolver.getMove(gameState);
+        } else {
+            // Default: use original backtracking solver (Minimax DP)
+            bestPosition = backtrackingSolver.getTwoPlayerMove(gameState);
+        }
         
         if (bestPosition == -1) {
             // No valid moves - AI loses
@@ -224,9 +260,17 @@ public class QueensGameService {
             return gameState;
         }
         
-        // Make the backtracking move
+        // Make the move
         Move aiMove = new Move(bestPosition, gameState.getCurrentPlayer(), gameState);
         return makeMove(aiMove);
+    }
+    
+    /**
+     * Check if position is valid for current game state
+     */
+    private boolean isValidPosition(GameState gameState, int position) {
+        List<Integer> validMoves = getAllValidPositions(gameState);
+        return validMoves.contains(position);
     }
 
     // Get all valid moves for current state

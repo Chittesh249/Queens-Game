@@ -200,4 +200,175 @@ public class BacktrackingSolverService {
         }
         return false;
     }
+    
+    // ==================== TWO-PLAYER MINIMAX METHODS ====================
+    
+    private static final int MAX_DEPTH = 4;
+    private static final int WIN_SCORE = 1000;
+    private static final int LOSE_SCORE = -1000;
+    
+    /**
+     * Get best move for two-player game using Minimax with Alpha-Beta pruning
+     */
+    public int getTwoPlayerMove(GameState gameState) {
+        if (gameState.isGameOver()) {
+            return -1;
+        }
+        
+        int n = gameState.getN();
+        List<Integer> regions = gameState.getRegions();
+        List<Integer> currentQueens = new ArrayList<>(gameState.getQueenPositions());
+        
+        Set<Integer> usedRegions = new HashSet<>();
+        for (int pos : currentQueens) {
+            usedRegions.add(regions.get(pos));
+        }
+        
+        int row = currentQueens.size();
+        
+        int bestMove = -1;
+        int bestScore = Integer.MIN_VALUE;
+        
+        // Try each valid move
+        for (int col = 0; col < n; col++) {
+            int pos = row * n + col;
+            int region = regions.get(pos);
+            
+            if (!isValidMove(pos, row, col, n, currentQueens, usedRegions, regions)) {
+                continue;
+            }
+            
+            // Make move
+            currentQueens.add(pos);
+            usedRegions.add(region);
+            
+            // Get score from minimax
+            int score = minimax(row + 1, n, currentQueens, usedRegions, regions, 
+                               MAX_DEPTH - 1, false, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            
+            // Undo move
+            currentQueens.remove(currentQueens.size() - 1);
+            usedRegions.remove(region);
+            
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = pos;
+            }
+        }
+        
+        return bestMove;
+    }
+    
+    /**
+     * Minimax with Alpha-Beta pruning for two-player game
+     * 
+     * isMaximizing: true = AI's turn (maximize), false = opponent's turn (minimize)
+     */
+    private int minimax(int row, int n, List<Integer> queens, Set<Integer> usedRegions,
+                        List<Integer> regions, int depth, boolean isMaximizing,
+                        int alpha, int beta) {
+        
+        // Base case: depth limit or game over
+        if (depth == 0 || row >= n) {
+            return evaluatePosition(row, n, queens, usedRegions, regions);
+        }
+        
+        // Get valid moves for current row
+        List<Integer> moves = getValidMovesInRow(row, n, queens, usedRegions, regions);
+        
+        // No valid moves = current player loses
+        if (moves.isEmpty()) {
+            return isMaximizing ? LOSE_SCORE + depth : WIN_SCORE - depth;
+        }
+        
+        if (isMaximizing) {
+            int best = Integer.MIN_VALUE;
+            
+            for (int pos : moves) {
+                int region = regions.get(pos);
+                
+                queens.add(pos);
+                usedRegions.add(region);
+                
+                best = Math.max(best, minimax(row + 1, n, queens, usedRegions, regions,
+                                              depth - 1, false, alpha, beta));
+                
+                queens.remove(queens.size() - 1);
+                usedRegions.remove(region);
+                
+                alpha = Math.max(alpha, best);
+                if (beta <= alpha) break; // Alpha-Beta prune
+            }
+            return best;
+            
+        } else {
+            int best = Integer.MAX_VALUE;
+            
+            for (int pos : moves) {
+                int region = regions.get(pos);
+                
+                queens.add(pos);
+                usedRegions.add(region);
+                
+                best = Math.min(best, minimax(row + 1, n, queens, usedRegions, regions,
+                                              depth - 1, true, alpha, beta));
+                
+                queens.remove(queens.size() - 1);
+                usedRegions.remove(region);
+                
+                beta = Math.min(beta, best);
+                if (beta <= alpha) break; // Alpha-Beta prune
+            }
+            return best;
+        }
+    }
+    
+    /**
+     * Evaluate position at leaf node
+     */
+    private int evaluatePosition(int row, int n, List<Integer> queens,
+                                 Set<Integer> usedRegions, List<Integer> regions) {
+        // Count available moves for current player
+        return getValidMovesInRow(row, n, queens, usedRegions, regions).size();
+    }
+    
+    /**
+     * Get valid moves in a specific row
+     */
+    private List<Integer> getValidMovesInRow(int row, int n, List<Integer> queens,
+                                             Set<Integer> usedRegions, List<Integer> regions) {
+        List<Integer> moves = new ArrayList<>();
+        
+        for (int col = 0; col < n; col++) {
+            int pos = row * n + col;
+            int region = regions.get(pos);
+            
+            if (isValidMove(pos, row, col, n, queens, usedRegions, regions)) {
+                moves.add(pos);
+            }
+        }
+        
+        return moves;
+    }
+    
+    /**
+     * Check if a move is valid
+     */
+    private boolean isValidMove(int pos, int row, int col, int n,
+                                List<Integer> queens, Set<Integer> usedRegions,
+                                List<Integer> regions) {
+        int region = regions.get(pos);
+        
+        if (usedRegions.contains(region)) return false;
+        
+        for (int q : queens) {
+            int qr = q / n;
+            int qc = q % n;
+            
+            if (qc == col) return false;
+            if (Math.abs(qr - row) == Math.abs(qc - col)) return false;
+        }
+        
+        return true;
+    }
 }
