@@ -51,3 +51,8 @@ export const getBenchmarks = async (): Promise<any[]> => {
   const response = await axios.get(`${API_BASE_URL}/benchmarks`);
   return response.data;
 };
+
+export const getBacktrackingSteps = async (n: number, regions: number[]): Promise<any[]> => {
+  const response = await axios.post(`http://localhost:8080/api/visualize/backtracking`, { n, regions });
+  return response.data;
+};

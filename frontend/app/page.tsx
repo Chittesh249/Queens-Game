@@ -3,12 +3,15 @@
 import { useState } from "react";
 import Board from "./components/Board";
 import ComplexityAnalysis from "./components/ComplexityAnalysis";
+import BacktrackingVisualizer from "./components/BacktrackingVisualizer";
 import Link from "next/link";
 
 export default function HomePage() {
   const [n, setN] = useState<number | "">("");
   const [showGame, setShowGame] = useState(false);
   const [showComplexity, setShowComplexity] = useState(false);
+  const [showVisualizer, setShowVisualizer] = useState(false);
+  const [boardData, setBoardData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const minN = 6;
 
@@ -27,6 +30,30 @@ export default function HomePage() {
   const handleReset = () => {
     setShowGame(false);
     setN("");
+  };
+
+  const handleStartVisualizer = (size: number) => {
+    setN(size);
+    // Generate board data for visualizer
+    const seed = Math.floor(Math.random() * 1000);
+    const regions = generateRandomRegions(size, seed);
+    const colors = generateDistinctColors(size);
+    const boxColors = regions.map(r => colors[r]);
+
+    // Borders
+    const borders = regions.map((region, i) => {
+      const row = Math.floor(i / size);
+      const col = i % size;
+      const b = { top: false, right: false, bottom: false, left: false };
+      if (row > 0 && regions[(row - 1) * size + col] !== region) b.top = true;
+      if (row < size - 1 && regions[(row + 1) * size + col] !== region) b.bottom = true;
+      if (col > 0 && regions[row * size + (col - 1)] !== region) b.left = true;
+      if (col < size - 1 && regions[row * size + (col + 1)] !== region) b.right = true;
+      return b;
+    });
+
+    setBoardData({ regions, boxColors, hasBorder: borders });
+    setShowVisualizer(true);
   };
 
 
@@ -136,6 +163,31 @@ export default function HomePage() {
     );
   }
 
+  if (showVisualizer && n !== "" && boardData) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+          fontFamily: "'Inter', sans-serif",
+          padding: "20px",
+        }}
+      >
+        <BacktrackingVisualizer
+          n={Number(n)}
+          regions={boardData.regions}
+          boxColors={boardData.boxColors}
+          hasBorder={boardData.hasBorder}
+          onBack={() => setShowVisualizer(false)}
+        />
+      </div>
+    );
+  }
+
 
   return (
     <div
@@ -168,7 +220,7 @@ export default function HomePage() {
           border: "none",
           borderRadius: "12px",
           cursor: "pointer",
-          marginBottom: "30px",
+          marginBottom: "15px",
           boxShadow: "0 10px 20px -5px rgba(118, 75, 162, 0.4)",
           transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
           display: "flex",
@@ -184,7 +236,43 @@ export default function HomePage() {
           e.currentTarget.style.boxShadow = "0 10px 20px -5px rgba(118, 75, 162, 0.4)";
         }}
       >
-        <span style={{ fontSize: "18px" }}>📊</span> View Algorithm Complexity
+        View Algorithm Complexity
+      </button>
+
+      <button
+        onClick={() => {
+          // Default to size 8 for visualizer if no size selected, or show a selector
+          // For now, let's just make the board size cards have a "Visualize" option or a separate button
+          setShowVisualizer(false); // Ensure we're not already showing it
+          // We'll add a way to pick N for visualizer or just use 8 as default
+          handleStartVisualizer(8);
+        }}
+        style={{
+          padding: "10px 24px",
+          fontSize: "14px",
+          fontWeight: "600",
+          color: "#fff",
+          background: "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 55%, #FF99AC 100%)",
+          border: "none",
+          borderRadius: "12px",
+          cursor: "pointer",
+          marginBottom: "30px",
+          boxShadow: "0 10px 20px -5px rgba(255, 106, 136, 0.4)",
+          transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px"
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = "translateY(-3px)";
+          e.currentTarget.style.boxShadow = "0 15px 25px -5px rgba(255, 106, 136, 0.5)";
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 10px 20px -5px rgba(255, 106, 136, 0.4)";
+        }}
+      >
+        Backtracking Visualizer (N=8)
       </button>
 
 
@@ -287,4 +375,59 @@ export default function HomePage() {
       </div>
     </div>
   );
+}
+
+// Helper functions for board generation (copied from Board.tsx for now to avoid refactoring)
+function generateRandomRegions(n: number, seed: number): number[] {
+  const totalCells = n * n;
+  const regions = new Array(totalCells).fill(-1);
+  const seededRandom = (i: number) => {
+    const x = Math.sin(seed * 9999 + i * 1234) * 10000;
+    return x - Math.floor(x);
+  };
+  const seeds: number[] = [];
+  const used = new Set<number>();
+  let attempt = 0;
+  while (seeds.length < n) {
+    const pos = Math.floor(seededRandom(attempt) * totalCells);
+    if (!used.has(pos)) {
+      used.add(pos);
+      seeds.push(pos);
+      regions[pos] = seeds.length - 1;
+    }
+    attempt++;
+  }
+  let queue = [...seeds];
+  let head = 0;
+  while (head < queue.length) {
+    const currentIdx = queue[head++];
+    const currentRegion = regions[currentIdx];
+    const row = Math.floor(currentIdx / n);
+    const col = currentIdx % n;
+    const neighbors: number[] = [];
+    if (row > 0) neighbors.push((row - 1) * n + col);
+    if (row < n - 1) neighbors.push((row + 1) * n + col);
+    if (col > 0) neighbors.push(row * n + (col - 1));
+    if (col < n - 1) neighbors.push(row * n + (col + 1));
+    neighbors.sort((a, b) => seededRandom(a + seed) - 0.5);
+    for (const neighbor of neighbors) {
+      if (regions[neighbor] === -1) {
+        regions[neighbor] = currentRegion;
+        queue.push(neighbor);
+      }
+    }
+  }
+  return regions;
+}
+
+function generateDistinctColors(n: number): string[] {
+  const colors: string[] = [];
+  const hueStep = 360 / n;
+  for (let i = 0; i < n; i++) {
+    const hue = Math.floor(i * hueStep);
+    const saturation = 65 + (i % 3) * 10;
+    const lightness = 70 + (i % 2) * 10;
+    colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+  }
+  return colors;
 }
